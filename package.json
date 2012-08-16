@@ -1,0 +1,16 @@
+{
+	"name": "lolclient",
+	"version": "0.0.2",
+	"private": true,
+	"scripts": {
+		"start": "node app"
+	},
+	"dependencies": {
+		"express": "3.0.0rc2",
+		"colors": "*",
+		"hexy": "*",
+		"namf": "*",
+		"node-uuid": "*",
+		"underscore": "*"
+	}
+}
