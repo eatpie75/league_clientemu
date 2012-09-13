@@ -27,11 +27,11 @@
             data.body = "<a href='lolspectate://ip=" + msg.data.ip + "&port=" + msg.data.port + "&game_id=" + msg.data.game_id + "&region=" + msg.data.region + "&key=" + msg.data.key + "'>" + name + "</a>";
           } else {
             data.body = msg.data;
+            res.contentType('json');
           }
         }
         client.removeListener('message', _get);
         res.charset = 'utf8';
-        res.contentType('json');
         return res.send(data.body);
       }
     };
