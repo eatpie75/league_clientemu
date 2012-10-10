@@ -83,6 +83,7 @@ class RecentGames
 				'team'				:if game.teamId.value==100 then 'blue' else 'purple'
 				'afk'				:game.afk
 				'leaver'			:game.leaver
+				'invalid'			:game.invalid
 				'ip_earned'			:game.ipEarned.value
 				'xp_earned'			:game.experienceEarned.value
 				'boost_ip'			:game.boostIpEarned.value
@@ -108,10 +109,15 @@ class RecentGames
 			for key in [
 				'num_deaths', 'champions_killed', 'assists', 'largest_critical_strike', 'largest_killing_spree', 'largest_multi_kill',
 				'item0', 'item1', 'item2', 'item3', 'item4', 'item5',
-				'minions_killed', 'gold_earned', 'physical_damage_dealt_player', 'magic_damage_dealt_player',
-				'physical_damage_taken', 'magic_damage_taken', 'total_heal', 'total_time_spent_dead', 'neutral_minions_killed', 'turrets_killed',
-				'inhibitors_destroyed', 'lose', 'win'#, 'nodes_neutralised', 'node_neutralisation_assists', 'nodes_captured',
-				#'victory_points', 'objectives', 'total_score', 'objective_score', 'combat_score', 'rank', 'damage_taken'
+				'minions_killed', 'neutral_minions_killed', 'gold_earned',
+				'physical_damage_dealt_player', 'magic_damage_dealt_player', 'physical_damage_taken', 'magic_damage_taken',
+				'total_heal', 'total_time_spent_dead',
+				'turrets_killed', 'inhibitors_destroyed',
+				'lose', 'win',
+				'sight_wards_bought_in_game', 'vision_wards_bought_in_game',
+				'node_neutralize', 'node_neutralize_assist', 'node_capture', 'node_capture_assist',
+				'victory_point_total', 'team_objective', 'objective_player_score', 'combat_player_score', 'total_player_score', 'total_score_rank',
+				#'total_damage_taken'
 			]
 				if not has_key(current.stats, key)
 					current.stats[key]=0
