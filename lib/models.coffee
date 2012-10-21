@@ -2,6 +2,15 @@ json	= JSON.stringify
 util	= require('util')
 
 has_key=(obj, key)->obj.hasOwnProperty(key)
+get_object_index=(array, key, value)->
+	i=0
+	for row in array
+		if has_key(row, key) and row[key]==value
+			return i
+			break
+		else
+			i+=1
+	return -1
 
 class PlayerNames
 	constructor:(@cb, options)->
@@ -348,18 +357,46 @@ class SpectatorInfo
 			'region'	:regions[@client.options.region]
 			'name'		:@info.game.object.name
 		}
+		if @full
+			current.info={
+				'id'		:@info.game.object.id.value
+				'game_map'	:@info.game.object.mapId
+				'game_mode'	:@info.game.object.gameMode
+				'game_type'	:@info.game.object.gameType
+				'queue_type':@info.game.object.queueTypeName
+				'bans'		:if @info.game.object.bannedChampions.data.length>0 then ({'champion':ban.object.championId, 'turn':ban.object.pickTurn, 'team':if ban.object.teamId==100 then 'blue' else 'purple'} for ban in @info.game.object.bannedChampions.data) else []
+				'players'	:[]
+			}
+			add_players=(data, team)->
+				for player in data
+					current.info.players.push({
+						'account_id'	:player.object.accountId.value
+						'summoner_id'	:player.object.summonerId.value
+						'internal_name'	:player.object.summonerInternalName
+						'name'			:player.object.summonerName
+						'turn'			:player.object.pickTurn
+						'team'			:team
+					})
+			add_players(@info.game.object.teamOne.data, 'blue')
+			add_players(@info.game.object.teamTwo.data, 'purple')
+			for champion in @info.game.object.playerChampionSelections.data
+				index=get_object_index(current.info.players, 'internal_name', champion.object.summonerInternalName)
+				current.info.players[index]['champion']=champion.object.championId
+				current.info.players[index]['summoner_spell_one']=champion.object.spell1Id.value
+				current.info.players[index]['summoner_spell_two']=champion.object.spell2Id.value
 		@data=current
 		return @data
 	get:(args)=>
 		name=args.name
 		@client.getSpectatorInfo(name, (err, result)=>
-			console.log("err:#{util.inspect(err, false, 10, true)}") if args.debug?
-			console.log("res:#{util.inspect(result, false, 10, true)}") if args.debug?
+			if has_key(args, 'full') then @full=args.full
 			if err?
-				@data='error':err
+				@data={'error':err}
 			else
 				@info=result.object
 				@parse()
+				if args.debug
+					@data.debug={'err':err, 'res':result.object}
 			@cb(@data, {requests:1})
 		)
 	toJSON:=>

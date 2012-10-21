@@ -8,7 +8,6 @@ module.exports=(req, res)->
 		if msg.event=="#{rid}__finished"
 			data=status:200, requests:msg.extra.requests
 			if msg.data.error?
-				# data.body=errors[msg.data.error]
 				data.body=msg.data
 			else
 				if link
@@ -24,5 +23,6 @@ module.exports=(req, res)->
 	name=req.query.name
 	if req.query.link? then link=true else link=false
 	if req.query.debug? then debug=true else debug=false
+	if req.query.full? then full=true else full=false
 	client.on('message', _get)
-	client.send({'event':'get', 'model':'SpectatorInfo', 'query':{'name':name, 'debug':debug}, 'uuid':rid})
+	client.send({'event':'get', 'model':'SpectatorInfo', 'query':{'name':name, 'debug':debug, 'full':full}, 'uuid':rid})

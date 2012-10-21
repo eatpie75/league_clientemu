@@ -7,7 +7,7 @@
   models = require('../lib/models');
 
   module.exports = function(req, res) {
-    var client, debug, link, name, rid, _get;
+    var client, debug, full, link, name, rid, _get;
     _get = function(msg) {
       var data, errors;
       errors = {
@@ -48,13 +48,19 @@
     } else {
       debug = false;
     }
+    if (req.query.full != null) {
+      full = true;
+    } else {
+      full = false;
+    }
     client.on('message', _get);
     return client.send({
       'event': 'get',
       'model': 'SpectatorInfo',
       'query': {
         'name': name,
-        'debug': debug
+        'debug': debug,
+        'full': full
       },
       'uuid': rid
     });
