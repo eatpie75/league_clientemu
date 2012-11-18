@@ -44,10 +44,11 @@ performQueueRequest=(host, username, password, cb)->
 		console.log("#{username} getting token")
 		_request(args, null, (err, res)->
 			if res.token?
-				_get_ip((ip)=>
-					res.ip_address=ip
-					cb(null, res)
-				)
+				# _get_ip((ip)=>
+				# 	res.ip_address=ip
+				# 	cb(null, res)
+				# )
+				cb(null, res)
 			else
 				_next_check()
 		)
