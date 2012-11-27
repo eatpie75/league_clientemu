@@ -6,7 +6,7 @@
 		"start": "node bridge"
 	},
 	"dependencies": {
-		"express": "3.0.1",
+		"express": "3.0.3",
 		"colors": "*",
 		"hexy": "*",
 		"namf": "*",
