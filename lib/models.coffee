@@ -172,6 +172,7 @@ class Summoner
 			'level'				:@org.object.summonerLevelAndPoints.object.summonerLevel.value
 			'profile_icon'		:@summoner.profileIconId
 			'season_one_tier'	:@summoner.seasonOneTier
+			'season_two_tier'	:@summoner.seasonTwoTier
 		}
 		@data=current
 		return @data
