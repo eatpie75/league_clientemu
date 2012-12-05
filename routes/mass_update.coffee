@@ -14,6 +14,7 @@ module.exports=(req, res)->
 		requests:0
 	running_queries=0
 	queue=[]
+	timers=[]
 	if req.query['accounts']?
 		queue=queue.concat(({'account_id':account} for account in req.query['accounts'].split(',')))
 	if req.query['names']?
@@ -23,6 +24,12 @@ module.exports=(req, res)->
 	if req.query['masteries']? then masteries=true else masteries=false
 	_get=(msg)->
 		if msg.event=="#{rid[0]}__finished"
+			if msg.data.error?
+				console.log('Empty Summoner')
+				timers.push(setTimeout(->
+					client.send({'event':'get', 'model':'Summoner', 'query':msg.query, 'uuid':rid[0], 'extra':{'runes':runes, 'masteries':masteries}})
+				, 2000))
+				return null
 			summoner=msg.data
 			data.requests+=msg.extra.requests
 			if not has_key(data.body.accounts, summoner.account_id)
@@ -37,16 +44,34 @@ module.exports=(req, res)->
 				running_queries+=1
 				client.send({'event':'get', 'model':'MasteryBook', 'query':{'summoner_id':summoner.summoner_id, 'account_id':summoner.account_id}, 'uuid':rid[3]})
 		else if msg.event=="#{rid[1]}__finished"
+			if msg.data.error?
+				console.log('Empty PlayerStats')
+				timers.push(setTimeout(->
+					client.send({'event':'get', 'model':'PlayerStats', 'query':msg.query, 'uuid':rid[1]})
+				, 2000))
+				return null
 			data.requests+=msg.extra.requests
 			data.body.accounts[msg.extra.account_id].stats=msg.data
 			running_queries-=1
-			if not masteries then _next()
+			_next()
 		else if msg.event=="#{rid[2]}__finished"
+			if msg.data.error?
+				console.log('Empty RecentGames')
+				timers.push(setTimeout(->
+					client.send({'event':'get', 'model':'RecentGames', 'query':msg.query, 'uuid':rid[2]})
+				, 2000))
+				return null
 			data.requests+=msg.extra.requests
 			running_queries-=1
 			data.body.accounts[msg.extra.account_id].games=msg.data
-			if not masteries then _next()
+			_next()
 		else if msg.event=="#{rid[3]}__finished"
+			if msg.data.error?
+				console.log('Empty MasteryBook')
+				timers.push(setTimeout(->
+					client.send({'event':'get', 'model':'MasteryBook', 'query':msg.query, 'uuid':rid[3]})
+				, 2000))
+				return null
 			data.requests+=msg.extra.requests
 			running_queries-=1
 			data.body.accounts[msg.extra.account_id].masteries=msg.data
@@ -72,6 +97,8 @@ module.exports=(req, res)->
 			res.contentType('json')
 			res.send(JSON.stringify(data.body))
 	throttled=->
+		for timer in timers
+			clearTimeout(timer)
 		client.removeListener('message', _get)
 		queue=[]
 		res.writeHead(500)

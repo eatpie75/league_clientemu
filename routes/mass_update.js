@@ -13,7 +13,7 @@
   };
 
   module.exports = function(req, res) {
-    var account, client, data, games, masteries, name, queue, rid, runes, running_queries, throttled, _get, _next;
+    var account, client, data, games, masteries, name, queue, rid, runes, running_queries, throttled, timers, _get, _next;
     client = req.lolclient;
     rid = [uuid.v4(), uuid.v4(), uuid.v4(), uuid.v4()];
     data = {
@@ -26,6 +26,7 @@
     };
     running_queries = 0;
     queue = [];
+    timers = [];
     if (req.query['accounts'] != null) {
       queue = queue.concat((function() {
         var _i, _len, _ref, _results;
@@ -72,6 +73,22 @@
     _get = function(msg) {
       var summoner, _ref;
       if (msg.event === ("" + rid[0] + "__finished")) {
+        if (msg.data.error != null) {
+          console.log('Empty Summoner');
+          timers.push(setTimeout(function() {
+            return client.send({
+              'event': 'get',
+              'model': 'Summoner',
+              'query': msg.query,
+              'uuid': rid[0],
+              'extra': {
+                'runes': runes,
+                'masteries': masteries
+              }
+            });
+          }, 2000));
+          return null;
+        }
         summoner = msg.data;
         data.requests += msg.extra.requests;
         if (!has_key(data.body.accounts, summoner.account_id)) {
@@ -113,20 +130,52 @@
           });
         }
       } else if (msg.event === ("" + rid[1] + "__finished")) {
+        if (msg.data.error != null) {
+          console.log('Empty PlayerStats');
+          timers.push(setTimeout(function() {
+            return client.send({
+              'event': 'get',
+              'model': 'PlayerStats',
+              'query': msg.query,
+              'uuid': rid[1]
+            });
+          }, 2000));
+          return null;
+        }
         data.requests += msg.extra.requests;
         data.body.accounts[msg.extra.account_id].stats = msg.data;
         running_queries -= 1;
-        if (!masteries) {
-          return _next();
-        }
+        return _next();
       } else if (msg.event === ("" + rid[2] + "__finished")) {
+        if (msg.data.error != null) {
+          console.log('Empty RecentGames');
+          timers.push(setTimeout(function() {
+            return client.send({
+              'event': 'get',
+              'model': 'RecentGames',
+              'query': msg.query,
+              'uuid': rid[2]
+            });
+          }, 2000));
+          return null;
+        }
         data.requests += msg.extra.requests;
         running_queries -= 1;
         data.body.accounts[msg.extra.account_id].games = msg.data;
-        if (!masteries) {
-          return _next();
-        }
+        return _next();
       } else if (msg.event === ("" + rid[3] + "__finished")) {
+        if (msg.data.error != null) {
+          console.log('Empty MasteryBook');
+          timers.push(setTimeout(function() {
+            return client.send({
+              'event': 'get',
+              'model': 'MasteryBook',
+              'query': msg.query,
+              'uuid': rid[3]
+            });
+          }, 2000));
+          return null;
+        }
         data.requests += msg.extra.requests;
         running_queries -= 1;
         data.body.accounts[msg.extra.account_id].masteries = msg.data;
@@ -167,6 +216,11 @@
       }
     };
     throttled = function() {
+      var timer, _i, _len;
+      for (_i = 0, _len = timers.length; _i < _len; _i++) {
+        timer = timers[_i];
+        clearTimeout(timer);
+      }
       client.removeListener('message', _get);
       queue = [];
       res.writeHead(500);

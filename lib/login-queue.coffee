@@ -48,6 +48,7 @@ performQueueRequest=(host, username, password, cb)->
 				# 	res.ip_address=ip
 				# 	cb(null, res)
 				# )
+				# console.log res
 				cb(null, res)
 			else
 				_next_check()

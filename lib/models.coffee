@@ -62,6 +62,8 @@ class PlayerStats
 		@client.getSummonerStats(account_id, (err, result)=>
 			if err?
 				data=err
+			else if not result?
+				@data={'error':'RETRY'}
 			else
 				@org=result.object
 				@account_id=@org.userId.value
@@ -141,6 +143,8 @@ class RecentGames
 			if err?
 				console.log('Error'.red+err)
 				data=err
+			else if not result?
+				@data={'error':'RETRY'}
 			else
 				@org=result.object
 				@account_id=@org.userId.value
@@ -164,6 +168,9 @@ class Summoner
 		@requests=0
 	parse:=>
 		@data={}
+		if not @summoner?
+			@data={'error':'RETRY'}
+			return @data
 		current={
 			'account_id'		:@summoner.acctId.value
 			'summoner_id'		:@summoner.sumId.value
@@ -191,7 +198,7 @@ class Summoner
 						console.log util.inspect(result, false, 10, true)
 					@parse()
 				extra={requests:@requests+1}
-				if @runes then extra['runes']=new RunePage({'book':@org.object.spellBook.object}).parse()
+				if @runes and @org?.object? then extra['runes']=new RunePage({'book':@org.object.spellBook.object}).parse()
 				@cb(@data, extra)
 			)
 		if has_key(args, 'account_id')

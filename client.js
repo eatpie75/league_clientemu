@@ -74,7 +74,8 @@
         process.send({
           event: "" + msg.uuid + "__finished",
           'data': data,
-          'extra': extra
+          'extra': extra,
+          'query': query
         });
         return model = null;
       };

@@ -20,7 +20,7 @@ client={}
 keepalive={}
 
 process.on('message', (msg)->
-	#console.log(msg)
+	# console.log(msg)
 	if msg.event=='connect'
 		options=
 			region:		msg.options.region		||'na'				# Lol Client region, one of 'na', 'euw' or 'eune'
@@ -45,7 +45,7 @@ process.on('message', (msg)->
 		model={}
 		_get=(data, extra={})->
 			extra.region=options.region
-			process.send({event:"#{msg.uuid}__finished", 'data':data, 'extra':extra})
+			process.send({event:"#{msg.uuid}__finished", 'data':data, 'extra':extra, 'query':query})
 			model=null
 		query=msg.query
 		query_options={'client':client}
