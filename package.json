@@ -6,11 +6,14 @@
 		"start": "node bridge"
 	},
 	"dependencies": {
-		"express": "3.0.3",
+		"express": "3.0.4",
 		"colors": "*",
 		"hexy": "*",
 		"namf": "*",
 		"node-uuid": "*",
-		"underscore": "*"
+		"underscore": "*",
+		"uglify-js": "*",
+		"uglifycss": "*",
+		"async": "*"
 	}
 }
