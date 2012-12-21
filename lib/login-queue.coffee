@@ -18,7 +18,9 @@ performQueueRequest=(host, username, password, cb)->
 		remaining=Math.round((target-current)/queue_rate)
 		console.log("#{username} in queue, postition:#{current}/#{target}, #{Math.floor(remaining/60)}:#{Math.round(remaining%60)} remaining")
 		diff=target-current
-		if diff<100
+		if diff<50
+			delay=3000
+		else if diff<100
 			delay=7000
 		else if diff<1000
 			delay=10000
