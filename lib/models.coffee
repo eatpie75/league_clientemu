@@ -121,19 +121,18 @@ class RecentGames
 				'num_deaths', 'champions_killed', 'assists', 'largest_critical_strike', 'largest_killing_spree', 'largest_multi_kill',
 				'item0', 'item1', 'item2', 'item3', 'item4', 'item5',
 				'minions_killed', 'neutral_minions_killed', 'gold_earned',
-				'physical_damage_dealt_player', 'magic_damage_dealt_player', 'physical_damage_taken', 'magic_damage_taken',
+				'physical_damage_dealt_player', 'magic_damage_dealt_player', 'physical_damage_dealt_to_champions', 'magic_damage_dealt_to_champions'
+				'total_damage_dealt', 'total_damage_dealt_to_champions'
+				'physical_damage_taken', 'magic_damage_taken', 'total_damage_taken'
 				'total_heal', 'total_time_spent_dead',
 				'turrets_killed', 'inhibitors_destroyed',
 				'lose', 'win',
 				'sight_wards_bought_in_game', 'vision_wards_bought_in_game',
 				'node_neutralize', 'node_neutralize_assist', 'node_capture', 'node_capture_assist',
 				'victory_point_total', 'team_objective', 'objective_player_score', 'combat_player_score', 'total_player_score', 'total_score_rank',
-				#'total_damage_taken'
 			]
 				if not has_key(current.stats, key)
 					current.stats[key]=0
-			current.stats.damage_taken=current.stats.physical_damage_taken+current.stats.magic_damage_taken
-			current.stats.damage_dealt=current.stats.physical_damage_dealt_player+current.stats.magic_damage_dealt_player
 			@data.push(current)
 			@data.sort((a,b)->if a.id>b.id then -1 else if a.id<b.id then 1 else  0)
 		return @data
