@@ -121,8 +121,8 @@ class RecentGames
 				'num_deaths', 'champions_killed', 'assists', 'largest_critical_strike', 'largest_killing_spree', 'largest_multi_kill',
 				'item0', 'item1', 'item2', 'item3', 'item4', 'item5',
 				'minions_killed', 'neutral_minions_killed', 'gold_earned',
-				'physical_damage_dealt_player', 'magic_damage_dealt_player', 'physical_damage_dealt_to_champions', 'magic_damage_dealt_to_champions'
-				'total_damage_dealt', 'total_damage_dealt_to_champions'
+				'physical_damage_dealt_player', 'magic_damage_dealt_player', 'physical_damage_dealt_to_champions', 'magic_damage_dealt_to_champions',
+				'total_damage_dealt', 'total_damage_dealt_to_champions',
 				'physical_damage_taken', 'magic_damage_taken', 'total_damage_taken'
 				'total_heal', 'total_time_spent_dead',
 				'turrets_killed', 'inhibitors_destroyed',
