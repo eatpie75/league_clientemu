@@ -18,9 +18,14 @@
   };
 
   exports.status = function(req, res) {
+    var status;
+    status = {
+      'data': req.bridge_status,
+      'server': req.server_id
+    };
     res.charset = 'utf8';
     res.contentType('json');
-    return res.send(JSON.stringify(req.bridge_status));
+    return res.send(JSON.stringify(status));
   };
 
 }).call(this);

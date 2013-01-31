@@ -187,14 +187,12 @@ class Summoner
 			@client.getSummonerData(@account_id, (err, result)=>
 				if err?
 					@data=err
+				else if not result?
+					@data={'error':'RETRY'}
 				else
 					@org=result
-					try
-						@summoner=result.object.summoner.object
-						@account_id=@summoner.acctId.value
-					catch e
-						console.log e
-						console.log util.inspect(result, false, 10, true)
+					@summoner=result.object.summoner.object
+					@account_id=@summoner.acctId.value
 					@parse()
 				extra={requests:@requests+1}
 				if @runes and @org?.object? then extra['runes']=new RunePage({'book':@org.object.spellBook.object}).parse()
@@ -209,6 +207,9 @@ class Summoner
 				if err?
 					@data=err
 					@cb(@data, {requests:@requests})
+				else if not result?
+					@data={'error':'RETRY'}
+					@cb(@data, {'requests':@requests})
 				else
 					@account_id=result.object.acctId.value
 					found_account_id()

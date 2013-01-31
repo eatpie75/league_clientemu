@@ -89,8 +89,11 @@ performQueueRequest=(host, username, password, cb)->
 		if req_options.port==443 then agent=https else agent=http
 		req=agent.request(req_options, (res)->
 			res.on('data', (d)->
-				data=JSON.parse(d.toString('utf-8'))
-				# console.log(data)
+				if res.statusCode!=200
+					console.log('got 500')
+					data={}
+				else
+					data=JSON.parse(d.toString('utf-8'))
 				tcb(null, data)
 			)
 		)

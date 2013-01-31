@@ -36,6 +36,9 @@ _log=(text)->
 		console.log(text)
 
 
+server_id_middleware=(req, res, next)->
+	req.server_id="#{options.region}:#{options.username}"
+	next()
 lolclient_middleware=(req, res, next)->
 	req.lolclient=app.get('lolclient')
 	next()
@@ -45,6 +48,7 @@ bridge_status_middleware=(req, res, next)->
 
 app=express()
 app.configure(->
+	app.use(server_id_middleware)
 	app.use(express.logger('dev'))
 	app.use(express.bodyParser())
 	app.use(express.methodOverride())
@@ -101,7 +105,7 @@ start_client=->
 		if code in [3, 5]
 			console.log(code, signal)
 			setTimeout(client_restart, 2000)
-		else if code in [1,4]
+		else if code in [1, 4]
 			get_time=()=>
 				if status.login_errors*500+1000<=6000
 					_log("restarting client in #{status.login_errors*500+1000}ms")

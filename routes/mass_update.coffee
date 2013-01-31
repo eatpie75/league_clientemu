@@ -10,7 +10,7 @@ module.exports=(req, res)->
 	rid=[uuid.v4(), uuid.v4(), uuid.v4(), uuid.v4()]
 	data=
 		status:200
-		body:{errors:[], accounts:{}}
+		body:{accounts:{}}
 		requests:0
 	running_queries=0
 	queue=[]
@@ -95,7 +95,7 @@ module.exports=(req, res)->
 			client.removeListener('message', _get)
 			res.charset='utf8'
 			res.contentType('json')
-			res.send(JSON.stringify(data.body))
+			res.send(JSON.stringify({'data':data.body, 'server':req.server_id}))
 	throttled=->
 		for timer in timers
 			clearTimeout(timer)

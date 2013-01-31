@@ -3,7 +3,7 @@ uuid		= require('node-uuid')
 module.exports=(req, res)->
 	_get=(msg)->
 		if msg.event=="#{rid}__finished"
-			data=status:200, body:msg.data, requests:msg.extra.requests
+			data={'status':200, 'body':{'data':msg.data, 'server':req.server_id}, 'requests':msg.extra.requests}
 			client.removeListener('message', _get)
 			res.charset='utf8'
 			res.contentType('json')

@@ -10,6 +10,10 @@ exports.index=(req, res)->
 	res.send(JSON.stringify(req.lolclient_status))
 
 exports.status=(req, res)->
+	status={
+		'data':req.bridge_status,
+		'server':req.server_id
+	}
 	res.charset='utf8'
 	res.contentType('json')
-	res.send(JSON.stringify(req.bridge_status))
+	res.send(JSON.stringify(status))

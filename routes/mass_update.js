@@ -19,7 +19,6 @@
     data = {
       status: 200,
       body: {
-        errors: [],
         accounts: {}
       },
       requests: 0
@@ -212,7 +211,10 @@
         client.removeListener('message', _get);
         res.charset = 'utf8';
         res.contentType('json');
-        return res.send(JSON.stringify(data.body));
+        return res.send(JSON.stringify({
+          'data': data.body,
+          'server': req.server_id
+        }));
       }
     };
     throttled = function() {
