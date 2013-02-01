@@ -439,6 +439,34 @@ class GetMasteryBookPacket extends Packet
 		headers.encoding=2
 		return headers
 
+class GetAllLeaguesForPlayerPacket extends Packet
+	generate:(summoner_id)->
+		object=new ASObject()
+		object.name='flex.messaging.messages.RemotingMessage'
+		object.keys=['source', 'operation', 'timestamp', 'messageId', 'clientId', 'timeToLive', 'body', 'destination', 'headers']
+		object.object=
+			operation:		'getAllLeaguesForPlayer'
+			source:			null
+			timestamp:		0
+			clientId:		null
+			timeToLive:		0
+			messageId:		uuid().toUpperCase()
+			destination:	'leaguesServiceProxy'
+			headers:		@generateHeaders()
+			body:			[summoner_id]
+		object.encoding=0
+		return object
+
+	generateHeaders:()->
+		headers=new ASObject()
+		headers.name=''
+		headers.object=
+			DSId:				@options.dsid
+			DSRequestTimeout:	60
+			DSEndpoint:			'my-rtmps'
+		headers.encoding=2
+		return headers
+
 exports.ConnectPacket			=ConnectPacket
 exports.LoginPacket				=LoginPacket
 exports.AuthPacket				=AuthPacket
@@ -453,3 +481,4 @@ exports.GetTeamByIdPacket		=GetTeamByIdPacket
 exports.GetSummonerNamePacket	=GetSummonerNamePacket
 exports.GetSpectatorInfoPacket	=GetSpectatorInfoPacket
 exports.GetMasteryBookPacket	=GetMasteryBookPacket
+exports.GetAllLeaguesForPlayerPacket	=GetAllLeaguesForPlayerPacket

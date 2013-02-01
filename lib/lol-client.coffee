@@ -14,6 +14,7 @@ class LolClient extends EventEmitter
 		'euw':	'prod.eu.lol.riotgames.com'
 		'eune':	'prod.eun1.lol.riotgames.com'
 		'br':	'prod.br.lol.riotgames.com'
+		'pbe':	'prod.pbe1.lol.riotgames.com'
 	}
 	
 	_loginQueueHosts:{
@@ -21,6 +22,7 @@ class LolClient extends EventEmitter
 		'euw':	'lq.eu.lol.riotgames.com'
 		'eune':	'lq.eun1.lol.riotgames.com'
 		'br':	'lq.br.lol.riotgames.com'
+		'pbe':	'lq.pbe1.lol.riotgames.com'
 	}
 
 	constructor:(@options)->
@@ -236,6 +238,16 @@ class LolClient extends EventEmitter
 		console.log "Finding masteries by summonerId: #{summoner_id}" if @options.debug
 		getMasteryBookPacket=lolPackets.GetMasteryBookPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new getMasteryBookPacket(@options).generate(summoner_id)])
+		@rtmp.send(cmd, (err, result)=>
+			return cb(err) if err
+			return cb(err, null) unless result?.args?[0]?.body?
+			return cb(err, result.args[0].body)
+		)
+
+	getAllLeaguesForPlayer:(summoner_id, cb)=>
+		console.log "Finding leagues for summonerId: #{summoner_id}" if @options.debug
+		GetAllLeaguesForPlayerPacket=lolPackets.GetAllLeaguesForPlayerPacket
+		cmd=new RTMPCommand(0x11, null, null, null, [new GetAllLeaguesForPlayerPacket(@options).generate(summoner_id)])
 		@rtmp.send(cmd, (err, result)=>
 			return cb(err) if err
 			return cb(err, null) unless result?.args?[0]?.body?

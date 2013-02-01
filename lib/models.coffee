@@ -11,6 +11,14 @@ get_object_index=(array, key, value)->
 		else
 			i+=1
 	return -1
+cmp=(a, b)->if a<b then -1 else if a>b then 1 else 0
+group_by=(array, group)->
+	result={}
+	for item in array
+		grouper=group(item)
+		if not has_key(result, grouper) then result[grouper]=[]
+		result[grouper].push(item)
+	return result
 
 class PlayerNames
 	constructor:(@cb, options)->
@@ -148,7 +156,7 @@ class RecentGames
 				@org=result.object
 				@account_id=@org.userId.value
 				@parse()
-			@cb(@data, {account_id:@account_id, requests:1})
+			@cb(@data, {'account_id':@account_id, 'requests':1})
 		)
 	toJSON:=>
 		return json(@data)
@@ -214,6 +222,95 @@ class Summoner
 					@account_id=result.object.acctId.value
 					found_account_id()
 			)
+	toJSON:=>
+		return json(@data)
+
+class Leagues
+	constructor:(@cb, options)->
+		if options?
+			if has_key(options, 'client') then @client=options.client
+			if has_key(options, 'leagues')
+				@leagues=options.leagues
+				@summoner_id=options.summoner_id
+		@tiers={'bronze':1, 'silver':2, 'gold':3, 'platinum':4, 'diamond':5, 'challenger':6}
+		@ranks={'i':1, 'ii':2, 'iii':3, 'iv':4, 'v':5}
+		@data=[]
+	parse:=>
+		@data=[]
+		for league in @leagues
+			league=league.object
+			league_rank=@ranks[league.requestorsRank.toLowerCase()]
+			current={
+				'queue':	league.queue
+				'name':		league.name
+				'tier':		league.tier
+			}
+			entries=group_by(league.entries.data, (item)->item.object.rank)
+			entries[league.requestorsRank].sort((a, b)=>
+				[a_points, b_points]=[a.object.leaguePoints, b.object.leaguePoints]
+				[a_wins, b_wins]=[a.object.wins, b.object.wins]
+				[a_losses, b_losses]=[a.object.losses, b.object.losses]
+				[a_mini_series, b_mini_series]=[a.object.miniSeries, b.object.miniSeries]
+				if a_mini_series!=null and b_mini_series==null
+					return -1
+				else if a_mini_series==null and b_mini_series!=null
+					return 1
+				else if a_mini_series!=null and b_mini_series!=null
+					[a_mini_series, b_mini_series]=[a_mini_series.object, b_mini_series.object]
+					[a_mini_series_games, b_mini_series_games]=[a_mini_series.wins+a_mini_series.losses, b_mini_series.wins+b_mini_series.losses]
+					if a_mini_series_games>b_mini_series_games
+						return -1
+					else if a_mini_series_games<b_mini_series_games
+						return 1
+					else
+						return cmp(a_mini_series.win, b_mini_series.wins)
+				else
+					if a_points==b_points
+						if a_wins==b_wins
+							return b_losses-a_losses
+						else
+							return b_wins-a_wins
+					else
+						return b_points-a_points
+			)
+			i=0
+			for entry in entries[league.requestorsRank]
+				entry=entry.object
+				i+=1
+				if entry.playerOrTeamId!=String(@summoner_id) then continue
+				current['rank']=@ranks[entry.rank.toLowerCase()]
+				current['league_rank']=i
+				current['league_points']=entry.leaguePoints
+				current['wins']=entry.wins
+				current['losses']=entry.losses
+				current['hot_streak']=entry.hotStreak
+				current['fresh_blood']=entry.freshBlood
+				current['veteran']=entry.veteran
+				if entry.miniSeries!=null
+					miniSeries=entry.miniSeries.object
+					current['mini_series']={
+						'target':	miniSeries.target
+						'wins':		miniSeries.wins
+						'losses':	miniSeries.losses
+					}
+				else
+					current['mini_series']=null
+				break
+			@data.push(current)
+		return @data
+	get:(args)=>
+		summoner_id=args.summoner_id
+		@client.getAllLeaguesForPlayer(summoner_id, (err, result)=>
+			if err?
+				@data=err
+			else if err==null and result==null
+				@data={}
+			else
+				@summoner_id=summoner_id
+				@leagues=result.object.summonerLeagues.data
+				@parse()
+			@cb(@data, {'requests':1, 'summoner_id':summoner_id})
+		)
 	toJSON:=>
 		return json(@data)
 
@@ -414,6 +511,7 @@ exports.PlayerNames		=PlayerNames
 exports.PlayerStats		=PlayerStats
 exports.RecentGames		=RecentGames
 exports.Summoner		=Summoner
+exports.Leagues			=Leagues
 exports.RunePage		=RunePage
 exports.Search			=Search
 exports.MasteryBook		=MasteryBook
