@@ -7,6 +7,8 @@ routes			= require('./routes')
 http			= require('http')
 path			= require('path')
 
+colors.mode='none'
+
 options={}
 id=''
 client={}
@@ -49,7 +51,7 @@ bridge_status_middleware=(req, res, next)->
 app=express()
 app.configure(->
 	app.use(server_id_middleware)
-	app.use(express.logger('dev'))
+	app.use(express.logger('tiny'))
 	app.use(express.bodyParser())
 	app.use(express.methodOverride())
 	app.use(express.compress())

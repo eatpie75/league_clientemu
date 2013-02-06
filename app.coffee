@@ -5,6 +5,8 @@ http			= require('http')
 path			= require('path')
 routes			= require('./routes')
 
+colors.mode='none'
+
 clients=[]
 
 _log=(msg)->
@@ -52,7 +54,7 @@ app=express()
 app.configure(->
 	app.set('port', process.env.PORT || 8080)
 	app.set('lolclients', clients)
-	app.use(express.logger('dev'))
+	app.use(express.logger('tiny'))
 	app.use(express.bodyParser())
 	app.use(express.methodOverride())
 	app.use(express.compress())

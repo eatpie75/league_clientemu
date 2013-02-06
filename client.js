@@ -8,6 +8,8 @@
 
   models = require('./lib/models');
 
+  colors.mode = 'none';
+
   _log = function(text) {
     return process.send({
       event: 'log',

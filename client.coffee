@@ -2,6 +2,8 @@ colors			= require('colors')
 lol_client		= require('./lib/lol-client')
 models			= require('./lib/models')
 
+colors.mode='none'
+
 _log=(text)->
 		process.send({event:'log', text:text})
 _keepalive=->

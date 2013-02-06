@@ -16,6 +16,8 @@
 
   path = require('path');
 
+  colors.mode = 'none';
+
   options = {};
 
   id = '';
@@ -74,7 +76,7 @@
 
   app.configure(function() {
     app.use(server_id_middleware);
-    app.use(express.logger('dev'));
+    app.use(express.logger('tiny'));
     app.use(express.bodyParser());
     app.use(express.methodOverride());
     app.use(express.compress());

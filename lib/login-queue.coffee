@@ -65,9 +65,12 @@ performQueueRequest=(host, username, password, cb)->
 		args={path:'/login-queue/rest/queue/authenticate'}
 		data = "payload=user%3D#{username}%2Cpassword%3D#{password}"
 		_request(args, data, (err, res)->
-			if res.status=='LOGIN'
+			if res.status=='LOGIN' and res.token
 				console.log("#{username} got token")
 				cb(null, res)
+			else if res.status=='LOGIN' and not res.token
+				console.log("#{username} got login but no token")
+				process.exit(1)
 			else if res.status=='QUEUE'
 				user=res.user
 				queue_name=res.champ
@@ -104,7 +107,7 @@ performQueueRequest=(host, username, password, cb)->
 		).on('socket', (socket)->
 			socket.setTimeout(20000)
 			socket.on('timeout', ()->
-				console.log 'things are about to go poorly'
+				console.log("Login queue timeout on: #{host}")
 				req.abort()
 				process.exit(1)
 			)

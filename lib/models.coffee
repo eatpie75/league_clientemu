@@ -2,15 +2,18 @@ json	= JSON.stringify
 util	= require('util')
 
 has_key=(obj, key)->obj.hasOwnProperty(key)
-get_object_index=(array, key, value)->
-	i=0
-	for row in array
-		if has_key(row, key) and row[key]==value
-			return i
+index_of_object=(array, key, value)->
+	index=0
+	found=0
+	for iter in array
+		if iter[key]==value
+			found=1
 			break
-		else
-			i+=1
-	return -1
+		index+=1
+	if found
+		return index
+	else
+		return -1
 cmp=(a, b)->if a<b then -1 else if a>b then 1 else 0
 group_by=(array, group)->
 	result={}
@@ -99,6 +102,7 @@ class RecentGames
 				'game_map'			:game.gameMapId
 				'game_mode'			:game.gameMode
 				'game_type'			:game.gameType
+				'ranked'			:game.ranked
 				'team'				:if game.teamId.value==100 then 'blue' else 'purple'
 				'afk'				:game.afk
 				'leaver'			:game.leaver
@@ -216,7 +220,12 @@ class Summoner
 					@data=err
 					@cb(@data, {requests:@requests})
 				else if not result?
-					@data={'error':'RETRY'}
+					banned_ids=[{'name':'IS1e93c4e08bfebb', 'summoner_id':23024970},]
+					# console.log(args.name)
+					if index_of_object(banned_ids, 'name', args.name)!=-1
+						@data={'error':'BANNED'}
+					else
+						@data={'error':'RETRY'}
 					@cb(@data, {'requests':@requests})
 				else
 					@account_id=result.object.acctId.value
@@ -243,7 +252,7 @@ class Leagues
 			current={
 				'queue':	league.queue
 				'name':		league.name
-				'tier':		league.tier
+				'tier':		@tiers[league.tier.toLowerCase()]
 			}
 			entries=group_by(league.entries.data, (item)->item.object.rank)
 			entries[league.requestorsRank].sort((a, b)=>
@@ -285,6 +294,7 @@ class Leagues
 				current['losses']=entry.losses
 				current['hot_streak']=entry.hotStreak
 				current['fresh_blood']=entry.freshBlood
+				current['inactive']=entry.inactive
 				current['veteran']=entry.veteran
 				if entry.miniSeries!=null
 					miniSeries=entry.miniSeries.object
@@ -305,6 +315,8 @@ class Leagues
 				@data=err
 			else if err==null and result==null
 				@data={}
+			else if not result?
+				@data={'error':'RETRY'}
 			else
 				@summoner_id=summoner_id
 				@leagues=result.object.summonerLeagues.data
@@ -485,7 +497,7 @@ class SpectatorInfo
 			add_players(@info.game.object.teamOne.data, 'blue')
 			add_players(@info.game.object.teamTwo.data, 'purple')
 			for champion in @info.game.object.playerChampionSelections.data
-				index=get_object_index(current.info.players, 'internal_name', champion.object.summonerInternalName)
+				index=index_of_object(current.info.players, 'internal_name', champion.object.summonerInternalName)
 				current.info.players[index]['champion']=champion.object.championId
 				current.info.players[index]['summoner_spell_one']=champion.object.spell1Id.value
 				current.info.players[index]['summoner_spell_two']=champion.object.spell2Id.value

@@ -15,6 +15,15 @@ index_of_object=(array, key, value)->
 		return index
 	else
 		return -1
+log_error=(errors, error, extra={})->
+	index=index_of_object(errors, 'error', error)
+	if index==-1
+		errors.push({'error':error, 'count':0, 'extra':extra})
+	else
+		errors[index]['count']+=1
+		for p,v in extra
+			errors[index]['extra'][p]=v
+	return errors
 
 module.exports=(req, res)->
 	client=req.lolclient
@@ -27,6 +36,7 @@ module.exports=(req, res)->
 	running_queries=0
 	queue=[]
 	timers=[]
+	errors=[]
 	if req.query['accounts']?
 		queue=queue.concat(({'account_id':account} for account in req.query['accounts'].split(',')))
 	if req.query['names']?
@@ -37,10 +47,22 @@ module.exports=(req, res)->
 	_get=(msg)->
 		if msg.event=="#{rid[0]}__finished"
 			if msg.data.error?
-				console.log('Empty Summoner')
-				timers.push(setTimeout(->
-					client.send({'event':'get', 'model':'Summoner', 'query':msg.query, 'uuid':rid[0], 'extra':{'runes':runes, 'masteries':masteries}})
-				, 2000))
+				if msg.data.error=='RETRY'
+					console.log("Empty Summoner, error:#{msg.data.error}")
+					errors=log_error(errors, msg.data.error)
+					if errors[index_of_object(errors, 'error', msg.data.error)].count>10
+						throttled()
+					else
+						timers.push(setTimeout(->
+							client.send({'event':'get', 'model':'Summoner', 'query':msg.query, 'uuid':rid[0], 'extra':{'runes':runes, 'masteries':masteries}})
+						, 2000))
+				else if msg.data.error=='BANNED'
+					console.log("Banned Summoner, error:#{msg.data.error}")
+					errors=log_error(errors, msg.data.error)
+					running_queries-=1
+					timers.push(setTimeout(->
+						_next()
+					, 10))
 				return null
 			summoner=msg.data
 			data.requests+=msg.extra.requests
@@ -50,9 +72,9 @@ module.exports=(req, res)->
 				account_index=index_of_object(data.body.accounts, 'account_id', summoner.account_id)
 			data.body.accounts[account_index].profile=summoner
 			if runes then data.body.accounts[account_index].runes=msg.extra.runes
-			client.send({'event':'get', 'model':'PlayerStats', 'query':{'account_id':summoner.account_id}, 'uuid':rid[1]})
+			# client.send({'event':'get', 'model':'PlayerStats', 'query':{'account_id':summoner.account_id}, 'uuid':rid[1]})
 			client.send({'event':'get', 'model':'Leagues', 'query':{'summoner_id':summoner.summoner_id}, 'uuid':rid[4]})
-			running_queries+=1
+			# running_queries+=1
 			if games
 				running_queries+=1
 				client.send({'event':'get', 'model':'RecentGames', 'query':{'account_id':summoner.account_id}, 'uuid':rid[2]})
@@ -62,9 +84,13 @@ module.exports=(req, res)->
 		else if msg.event=="#{rid[1]}__finished"
 			if msg.data.error?
 				console.log('Empty PlayerStats')
-				timers.push(setTimeout(->
-					client.send({'event':'get', 'model':'PlayerStats', 'query':msg.query, 'uuid':rid[1]})
-				, 2000))
+				errors=log_error(errors, msg.data.error)
+				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
+					throttled()
+				else
+					timers.push(setTimeout(->
+						client.send({'event':'get', 'model':'PlayerStats', 'query':msg.query, 'uuid':rid[1]})
+					, 2000))
 				return null
 			data.requests+=msg.extra.requests
 			account_index=index_of_object(data.body.accounts, 'account_id', msg.extra.account_id)
@@ -74,9 +100,13 @@ module.exports=(req, res)->
 		else if msg.event=="#{rid[2]}__finished"
 			if msg.data.error?
 				console.log('Empty RecentGames')
-				timers.push(setTimeout(->
-					client.send({'event':'get', 'model':'RecentGames', 'query':msg.query, 'uuid':rid[2]})
-				, 2000))
+				errors=log_error(errors, msg.data.error)
+				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
+					throttled()
+				else
+					timers.push(setTimeout(->
+						client.send({'event':'get', 'model':'RecentGames', 'query':msg.query, 'uuid':rid[2]})
+					, 2000))
 				return null
 			data.requests+=msg.extra.requests
 			account_index=index_of_object(data.body.accounts, 'account_id', msg.extra.account_id)
@@ -86,9 +116,13 @@ module.exports=(req, res)->
 		else if msg.event=="#{rid[3]}__finished"
 			if msg.data.error?
 				console.log('Empty MasteryBook')
-				timers.push(setTimeout(->
-					client.send({'event':'get', 'model':'MasteryBook', 'query':msg.query, 'uuid':rid[3]})
-				, 2000))
+				errors=log_error(errors, msg.data.error)
+				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
+					throttled()
+				else
+					timers.push(setTimeout(->
+						client.send({'event':'get', 'model':'MasteryBook', 'query':msg.query, 'uuid':rid[3]})
+					, 2000))
 				return null
 			data.requests+=msg.extra.requests
 			account_index=index_of_object(data.body.accounts, 'account_id', msg.extra.account_id)
@@ -98,9 +132,13 @@ module.exports=(req, res)->
 		else if msg.event=="#{rid[4]}__finished"
 			if msg.data.error?
 				console.log('Empty Leagues')
-				timers.push(setTimeout(->
-					client.send({'event':'get', 'model':'Leagues', 'query':msg.query, 'uuid':rid[4]})
-				, 2000))
+				errors=log_error(errors, msg.data.error)
+				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
+					throttled()
+				else
+					timers.push(setTimeout(->
+						client.send({'event':'get', 'model':'Leagues', 'query':msg.query, 'uuid':rid[4]})
+					, 2000))
 				return null
 			data.requests+=msg.extra.requests
 			account_index=index_of_object(data.body.accounts, 'summoner_id', msg.extra.summoner_id)
