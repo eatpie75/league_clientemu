@@ -30,15 +30,15 @@ process.on('message', (msg)->
 			password:	msg.options.password	||'penis2'			# guess
 			version: 	msg.options.version		||'1.60.12_05_22_19_12'				# Lol Client version - must be "current" or it wont work. This is correct as at 21/03/2012
 		client=new lol_client(options)
-		client.on('connection', ->
+		client.once('connection', ->
 			process.send({event:'connected'})
 			keepalive=setInterval(->
 				_keepalive()
 			, 120000)
-		).on('throttled', ->
+		).once('throttled', ->
 			process.send({event:'throttled'})
 			process.exit(3)
-		).on('timeout', ->
+		).once('timeout', ->
 			process.send({event:'timeout'})
 			process.exit(5)
 		)

@@ -47,19 +47,19 @@
         version: msg.options.version || '1.60.12_05_22_19_12'
       };
       client = new lol_client(options);
-      client.on('connection', function() {
+      client.once('connection', function() {
         process.send({
           event: 'connected'
         });
         return keepalive = setInterval(function() {
           return _keepalive();
         }, 120000);
-      }).on('throttled', function() {
+      }).once('throttled', function() {
         process.send({
           event: 'throttled'
         });
         return process.exit(3);
-      }).on('timeout', function() {
+      }).once('timeout', function() {
         process.send({
           event: 'timeout'
         });

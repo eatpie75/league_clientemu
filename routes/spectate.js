@@ -18,18 +18,19 @@
       if (msg.event === ("" + rid + "__finished")) {
         data = {
           'status': 200,
-          'requests': msg.extra.requests
+          'requests': msg.extra.requests,
+          'body': {
+            'data': {},
+            'server': req.server_id
+          }
         };
         if (msg.data.error != null) {
-          data.body = msg.data;
+          data.body.data = msg.data;
         } else {
           if (link) {
-            data.body = "<a href='lolspectate://ip=" + msg.data.ip + "&port=" + msg.data.port + "&game_id=" + msg.data.game_id + "&region=" + msg.data.region + "&key=" + msg.data.key + "'>" + name + "</a>";
+            data.body.data = "<a href='lolspectate://ip=" + msg.data.ip + "&port=" + msg.data.port + "&game_id=" + msg.data.game_id + "&region=" + msg.data.region + "&key=" + msg.data.key + "'>" + name + "</a>";
           } else {
-            data.body = {
-              'data': msg.data,
-              'server': req.server_id
-            };
+            data.body.data = msg.data;
             res.contentType('json');
           }
         }
