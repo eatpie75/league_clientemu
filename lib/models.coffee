@@ -1,19 +1,14 @@
 json	= JSON.stringify
-util	= require('util')
+logger	= require('winston')
 
 has_key=(obj, key)->obj.hasOwnProperty(key)
 index_of_object=(array, key, value)->
 	index=0
-	found=0
 	for iter in array
 		if iter[key]==value
-			found=1
-			break
+			return index
 		index+=1
-	if found
-		return index
-	else
-		return -1
+	return -1
 cmp=(a, b)->if a<b then -1 else if a>b then 1 else 0
 group_by=(array, group)->
 	result={}
@@ -33,7 +28,7 @@ class PlayerNames
 	parse:=>
 		#
 	get:(args)=>
-		#console.log(args)
+		#logger.info(args)
 		@summoners=args.summoners
 		@client.getSummonerName(@summoners, (err, result)=>
 			if err?
@@ -152,7 +147,7 @@ class RecentGames
 		account_id=args.account_id
 		@client.getMatchHistory(account_id, (err, result)=>
 			if err?
-				console.log('Error'.red+err)
+				logger.error('models: recent games: Error', err)
 				data=err
 			else if not result?
 				@data={'error':'RETRY'}
@@ -221,7 +216,7 @@ class Summoner
 					@cb(@data, {requests:@requests})
 				else if not result?
 					banned_ids=[{'name':'IS1e93c4e08bfebb', 'summoner_id':23024970},]
-					# console.log(args.name)
+					# logger.info(args.name)
 					if index_of_object(banned_ids, 'name', args.name)!=-1
 						@data={'error':'BANNED'}
 					else
@@ -335,7 +330,7 @@ class Search
 				@account_id=@search.account_id
 		@data={}
 	parse:=>
-		console.log(@search)
+		logger.info('models: search: ', @search)
 		@data={}
 		current={
 			'account_id'		:@search.acctId.value
@@ -356,7 +351,7 @@ class Search
 			else if err==null and result==null
 				@data={}
 			else
-				# console.log(err, result)
+				# logger.error(err, result)
 				@account_id=result.object.acctId.value
 				@search=result.object
 				@parse()

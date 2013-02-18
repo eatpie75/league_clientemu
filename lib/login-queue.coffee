@@ -1,6 +1,7 @@
 u		= require('underscore')
 http	= require('http')
 https	= require('https')
+logger	= require('winston')
 
 performQueueRequest=(host, username, password, cb)->
 	[username, password, cb]=[username, password, cb]
@@ -16,7 +17,7 @@ performQueueRequest=(host, username, password, cb)->
 	queue_rate=0
 	_next_check=->
 		remaining=Math.round((target-current)/queue_rate)
-		console.log("#{username} in queue, postition:#{current}/#{target}, #{Math.floor(remaining/60)}:#{Math.round(remaining%60)} remaining")
+		logger.info("login queue: #{username} in queue, postition:#{current}/#{target}, #{Math.floor(remaining/60)}:#{Math.round(remaining%60)} remaining")
 		diff=target-current
 		if diff<50
 			delay=3000
@@ -30,7 +31,7 @@ performQueueRequest=(host, username, password, cb)->
 			delay=180000
 		setTimeout(_check_queue, delay)
 	_check_queue=->
-		args={path:"/login-queue/rest/queue/ticker/#{@queue_name}"}
+		args={'path':"/login-queue/rest/queue/ticker/#{@queue_name}"}
 		_request(args, null, (err, res)->
 			key=u.find(u.keys(res), (tmp)->
 				if Number(tmp)==queue_node then true else false
@@ -42,34 +43,34 @@ performQueueRequest=(host, username, password, cb)->
 				_next_check()
 		)
 	_get_token=->
-		args={path:"/login-queue/rest/queue/authToken/#{user}"}
-		console.log("#{username} getting token")
+		args={'path':"/login-queue/rest/queue/authToken/#{user}"}
+		logger.info("login queue: #{username} getting login token")
 		_request(args, null, (err, res)->
 			if res.token?
 				# _get_ip((ip)=>
 				# 	res.ip_address=ip
 				# 	cb(null, res)
 				# )
-				# console.log res
+				# logger.info('', res)
 				cb(null, res)
 			else
 				_next_check()
 		)
 	_get_ip=(tcb)->
-		args={path:'/services/connection_info', host:'ll.leagueoflegends.com', port:80}
-		console.log("#{username} getting ip")
+		args={'path':'/services/connection_info', 'host':'ll.leagueoflegends.com', 'port':80}
+		logger.info("login queue: #{username} getting ip")
 		_request(args, null, (err, res)->
 			tcb(res.ip_address)
 		)
 	_attempt_login=->
-		args={path:'/login-queue/rest/queue/authenticate'}
+		args={'path':'/login-queue/rest/queue/authenticate'}
 		data = "payload=user%3D#{username}%2Cpassword%3D#{password}"
 		_request(args, data, (err, res)->
 			if res.status=='LOGIN' and res.token
-				console.log("#{username} got token")
+				logger.info("login queue: #{username} got token")
 				cb(null, res)
 			else if res.status=='LOGIN' and not res.token
-				console.log("#{username} got login but no token")
+				logger.info("login queue: #{username} got login but no token")
 				process.exit(1)
 			else if res.status=='QUEUE'
 				user=res.user
@@ -83,7 +84,7 @@ performQueueRequest=(host, username, password, cb)->
 				current=tmp.current
 				_next_check()
 			else
-				console.log res
+				logger.error("login queue: is confused", res)
 		)
 	_request=(kwargs, payload, tcb)->
 		req_options=u.clone(options)
@@ -93,7 +94,7 @@ performQueueRequest=(host, username, password, cb)->
 		req=agent.request(req_options, (res)->
 			res.on('data', (d)->
 				if res.statusCode!=200
-					console.log('got 500')
+					logger.error('login queue: got 500')
 					data={}
 				else
 					data=JSON.parse(d.toString('utf-8'))
@@ -101,13 +102,13 @@ performQueueRequest=(host, username, password, cb)->
 			)
 		)
 		req.on('error', (err)->
-			console.log err
+			logger.error('login queue: request error', err)
 			req.abort()
 			process.exit(1)
 		).on('socket', (socket)->
 			socket.setTimeout(20000)
 			socket.on('timeout', ()->
-				console.log("Login queue timeout on: #{host}")
+				logger.error("login queue: timeout on: #{host}")
 				req.abort()
 				process.exit(1)
 			)

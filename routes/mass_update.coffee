@@ -1,20 +1,15 @@
-util		= require('util')
 uuid		= require('node-uuid')
 models		= require('../lib/models')
+logger		= require('winston')
 
 has_key=(obj, key)->obj.hasOwnProperty(key)
 index_of_object=(array, key, value)->
 	index=0
-	found=0
 	for iter in array
 		if iter[key]==value
-			found=1
-			break
+			return index
 		index+=1
-	if found
-		return index
-	else
-		return -1
+	return -1
 log_error=(errors, error, extra={})->
 	index=index_of_object(errors, 'error', error)
 	if index==-1
@@ -48,16 +43,17 @@ module.exports=(req, res)->
 		if msg.event=="#{rid[0]}__finished"
 			if msg.data.error?
 				if msg.data.error=='RETRY'
-					console.log("Empty Summoner, error:#{msg.data.error}")
+					logger.warn("mass update: Empty Summoner", msg.data.error)
 					errors=log_error(errors, msg.data.error)
 					if errors[index_of_object(errors, 'error', msg.data.error)].count>10
+						logger.error("mass update: Too many errors")
 						throttled()
 					else
 						timers.push(setTimeout(->
 							client.send({'event':'get', 'model':'Summoner', 'query':msg.query, 'uuid':rid[0], 'extra':{'runes':runes, 'masteries':masteries}})
 						, 2000))
 				else if msg.data.error=='BANNED'
-					console.log("Banned Summoner, error:#{msg.data.error}")
+					logger.warn("mass update: Banned Summoner", msg.data.error)
 					errors=log_error(errors, msg.data.error)
 					running_queries-=1
 					timers.push(setTimeout(->
@@ -83,7 +79,7 @@ module.exports=(req, res)->
 				client.send({'event':'get', 'model':'MasteryBook', 'query':{'summoner_id':summoner.summoner_id, 'account_id':summoner.account_id}, 'uuid':rid[3]})
 		else if msg.event=="#{rid[1]}__finished"
 			if msg.data.error?
-				console.log('Empty PlayerStats')
+				logger.warn('mass update: Empty PlayerStats')
 				errors=log_error(errors, msg.data.error)
 				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
 					throttled()
@@ -99,7 +95,7 @@ module.exports=(req, res)->
 			_next()
 		else if msg.event=="#{rid[2]}__finished"
 			if msg.data.error?
-				console.log('Empty RecentGames')
+				logger.warn('mass update: Empty RecentGames')
 				errors=log_error(errors, msg.data.error)
 				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
 					throttled()
@@ -115,7 +111,7 @@ module.exports=(req, res)->
 			_next()
 		else if msg.event=="#{rid[3]}__finished"
 			if msg.data.error?
-				console.log('Empty MasteryBook')
+				logger.warn('mass update: Empty MasteryBook')
 				errors=log_error(errors, msg.data.error)
 				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
 					throttled()
@@ -131,7 +127,7 @@ module.exports=(req, res)->
 			_next()
 		else if msg.event=="#{rid[4]}__finished"
 			if msg.data.error?
-				console.log('Empty Leagues')
+				logger.warn('mass update: Empty Leagues')
 				errors=log_error(errors, msg.data.error)
 				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
 					throttled()
@@ -147,19 +143,18 @@ module.exports=(req, res)->
 			_next()
 		else if msg.event in ['throttled','timeout']
 			throttled()
-		else
-			console.log(msg)
+		# else
+		# 	logger.error('mass update: unknown event', msg)
 	_next=->
 		if running_queries<3 and queue.length>0
 			running_queries+=1
 			key=queue.shift()
-			console.log(key)
+			logger.info('mass update:', key)
 			extra={'runes':runes, 'masteries':masteries}
 			try
 				client.send({'event':'get', 'model':'Summoner', 'query':key, 'uuid':rid[0], 'extra':extra})
 			catch error
-				console.log(error)
-				console.log('mass_update:oh god')
+				logger.error('mass_update: oh god', error)
 		else if running_queries==0 and queue.length==0
 			client.removeListener('message', _get)
 			res.charset='utf8'

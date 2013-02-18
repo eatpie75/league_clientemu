@@ -4,7 +4,6 @@ models		= require('../lib/models')
 module.exports=(req, res)->
 	_get=(msg)->
 		errors='OB-1':'No game', 'OB-2':'Game not observable', 'OB-3':'Game not started yet'
-		# console.log(msg)
 		if msg.event=="#{rid}__finished"
 			data={'status':200, 'requests':msg.extra.requests, 'body':{'data':{}, 'server':req.server_id}}
 			if msg.data.error?

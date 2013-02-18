@@ -1,12 +1,13 @@
-tls = require('tls')
-loginQueue = require('./login-queue')
-lolPackets = require('./packets')
-rtmp = require('namf/rtmp')
+tls			= require('tls')
+loginQueue	= require('./login-queue')
+lolPackets	= require('./packets')
+rtmp		= require('namf/rtmp')
+logger		= require('winston')
 
-RTMPClient = rtmp.RTMPClient
-RTMPCommand = rtmp.RTMPCommand
+RTMPClient	= rtmp.RTMPClient
+RTMPCommand	= rtmp.RTMPCommand
 
-EventEmitter = require('events').EventEmitter
+EventEmitter= require('events').EventEmitter
 
 class LolClient extends EventEmitter
 	_rtmpHosts:{
@@ -36,44 +37,43 @@ class LolClient extends EventEmitter
 
 		@options.username=@options.username
 		@options.password=@options.password
-		@options.version=@options.version || '1.55.12_02_27_22_54'
+		@options.version=@options.version
 		@options.debug=@options.debug || false
 
 		@keep_alive_counter=0
 
-		console.log @options if @options.debug
+		logger.info('lol-client: options:', @options) if @options.debug
 
 	connect:(cb)->
 		@checkLoginQueue((err, token)=>
-			console.log err if err
+			logger.error('lol-client: connection error', err) if err
 			# return cb(err) if err
 			@sslConnect((err, stream)=>
 				# return cb(err) if err
-				# console.log 'stream connected'
+				# logger.info('lol-client: stream connected')
 				@stream=stream
 				@setupRTMP()
 			)
 		)
 
 	checkLoginQueue:(cb)->
-		console.log 'Checking Login Queue' if @options.debug
+		logger.info('lol-client: Checking Login Queue') if @options.debug
 		loginQueue(@options.lqHost, @options.username, @options.password, (err, response)=>
 			if err
-				console.log 'Login Queue Failed' if @options.debug
-				console.log err if err and @options.debug
+				logger.error('lol-client: Login Queue Failed', err)# if @options.debug
 				cb(err)
 			else
 				if !response.token
 					cb(new Error('Login Queue Response had no token'))
 				else
-					console.log 'Login Queue Response', response if @options.debug
+					logger.info('lol-client: Login Queue Response', response) if @options.debug
 					@options.queueToken=response.token
 					@options.queue_ip=response.ip_address if response.ip_address?
 					cb(null, @options.queueToken)
 		)
 
 	sslConnect:(cb)->
-		console.log 'Connecting to SSL' if @options.debug
+		logger.info('lol-client: Connecting to SSL') if @options.debug
 
 		to={}
 		stream=tls.connect(@options.port, @options.host, ()=>
@@ -82,7 +82,7 @@ class LolClient extends EventEmitter
 		)
 		to=setTimeout(
 			()->
-				console.log 'ssl timeout'
+				logger.error('lol-client: ssl timeout')
 				stream.destroySoon()
 				process.exit(1)
 			, 30000
@@ -93,9 +93,9 @@ class LolClient extends EventEmitter
 
 
 	setupRTMP:()->
-		console.log 'Setting up RTMP Client' if @options.debug
+		logger.info('lol-client: Setting up RTMP Client') if @options.debug
 		@rtmp=new RTMPClient(@stream)
-		console.log 'Handshaking RTMP' if @options.debug
+		logger.info('lol-client: Handshaking RTMP') if @options.debug
 		@rtmp.handshake((err)=>
 			if err
 				@stream.destroy()
@@ -104,35 +104,35 @@ class LolClient extends EventEmitter
 		)
 
 	performNetConnect:()->
-		console.log 'Performing RTMP NetConnect' if @options.debug
+		logger.info('lol-client: Performing RTMP NetConnect') if @options.debug
 		ConnectPacket=lolPackets.ConnectPacket
 		pkt=new ConnectPacket(@options)
 		cmd=new RTMPCommand(0x14, 'connect', null, pkt.appObject(), [false, 'nil', '', pkt.commandObject()])
 		@rtmp.send(cmd, (err, result)=>
 			if err
-				console.log 'NetConnect failed' if @options.debug
+				logger.error('lol-client: NetConnect failed') if @options.debug
 				@stream.destroy()
 			else
-				console.log 'NetConnect success' if @options.debug
+				logger.error('lol-client: NetConnect success') if @options.debug
 				@performLogin(result)
 		)
 
 	performLogin:(result)=>
-		console.log 'Performing RTMP Login...' if @options.debug
+		logger.info('lol-client: Performing RTMP Login...') if @options.debug
 		LoginPacket=lolPackets.LoginPacket
 		@options.dsid=result.args[0].id
 
 		cmd=new RTMPCommand(0x11, null, null, null, [new LoginPacket(@options).generate(@options.version)])
 		@rtmp.send(cmd, (err, result)=>
 			if err
-				console.log 'RTMP Login failed' if @options.debug
+				logger.error('lol-client: RTMP Login failed') if @options.debug
 				@stream.destroy()
 			else
 				@performAuth(result)
 		)
 
 	performAuth:(result)=>
-		console.log 'Performing RTMP Auth..' if @options.debug
+		logger.info('lol-client: Performing RTMP Auth..') if @options.debug
 		AuthPacket = lolPackets.AuthPacket
 		
 		@options.authToken=result.args[0].body.object.token
@@ -140,15 +140,15 @@ class LolClient extends EventEmitter
 		cmd = new RTMPCommand(0x11, null, null, null, [new AuthPacket(@options).generate()])
 		@rtmp.send(cmd, (err, result)=>
 			if err
-				console.log 'RTMP Auth failed' if @options.debug
+				logger.info('lol-client: RTMP Auth failed') if @options.debug
 			else
-				console.log 'Connect Process Completed' if @options.debug
+				logger.error('lol-client: Connect Process Completed') if @options.debug
 				@emit('connection')
 				@rtmp.ev.on('throttled', =>@emit('throttled'))
 		)
 	
 	getSummonerByName:(name, cb)=>
-		console.log "Finding player by name: #{name}" if @options.debug
+		logger.info("Finding player by name: #{name}") if @options.debug
 		LookupPacket=lolPackets.LookupPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new LookupPacket(@options).generate(name)])
 		@rtmp.send(cmd, (err, result)=>
@@ -158,7 +158,7 @@ class LolClient extends EventEmitter
 		)
 
 	getSummonerStats:(account_id, cb)=>
-		console.log "Fetching Summoner Stats for #{account_id}" if @options.debug
+		logger.info("Fetching Summoner Stats for #{account_id}") if @options.debug
 		PlayerStatsPacket=lolPackets.PlayerStatsPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new PlayerStatsPacket(@options).generate(Number(account_id))])
 		@rtmp.send(cmd, (err, result)=>
@@ -168,7 +168,7 @@ class LolClient extends EventEmitter
 		)
 
 	getMatchHistory:(account_id, cb)=>
-		console.log "Fetching recent games for #{account_id}" if @options.debug
+		logger.info("Fetching recent games for #{account_id}") if @options.debug
 		RecentGamesPacket=lolPackets.RecentGamesPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new RecentGamesPacket(@options).generate(Number(account_id))])
 		@rtmp.send(cmd, (err, result)=>
@@ -214,7 +214,7 @@ class LolClient extends EventEmitter
 		)
 
 	getSummonerName:(name, cb)=>
-		console.log "Finding name by summonerId: #{name}" if @options.debug
+		logger.info("Finding name by summonerId: #{name}") if @options.debug
 		GetSummonerNamePacket=lolPackets.GetSummonerNamePacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new GetSummonerNamePacket(@options).generate(name)])
 		@rtmp.send(cmd, (err, result)=>
@@ -224,7 +224,7 @@ class LolClient extends EventEmitter
 		)
 
 	getSpectatorInfo:(name, cb)=>
-		console.log "Finding spectator info by summonerId: #{name}" if @options.debug
+		logger.info("Finding spectator info by summonerId: #{name}") if @options.debug
 		getSpectatorInfoPacket=lolPackets.GetSpectatorInfoPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new getSpectatorInfoPacket(@options).generate(name)])
 		@rtmp.send(cmd, (err, result)=>
@@ -235,7 +235,7 @@ class LolClient extends EventEmitter
 		)
 
 	getMasteryBook:(summoner_id, cb)=>
-		console.log "Finding masteries by summonerId: #{summoner_id}" if @options.debug
+		logger.info("Finding masteries by summonerId: #{summoner_id}") if @options.debug
 		getMasteryBookPacket=lolPackets.GetMasteryBookPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new getMasteryBookPacket(@options).generate(summoner_id)])
 		@rtmp.send(cmd, (err, result)=>
@@ -245,7 +245,7 @@ class LolClient extends EventEmitter
 		)
 
 	getAllLeaguesForPlayer:(summoner_id, cb)=>
-		console.log "Finding leagues for summonerId: #{summoner_id}" if @options.debug
+		logger.info("Finding leagues for summonerId: #{summoner_id}") if @options.debug
 		GetAllLeaguesForPlayerPacket=lolPackets.GetAllLeaguesForPlayerPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new GetAllLeaguesForPlayerPacket(@options).generate(summoner_id)])
 		@rtmp.send(cmd, (err, result)=>
@@ -255,7 +255,7 @@ class LolClient extends EventEmitter
 		)
 
 	keepAlive:(cb)=>
-		console.log "Sending Heartbeat" if @options.debug
+		logger.info("Sending Heartbeat") if @options.debug
 		HeartbeatPacket=lolPackets.HeartbeatPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new HeartbeatPacket(@options).generate(@options.account_id, @keep_alive_counter)])
 		@rtmp.send(cmd, (err, result)=>
