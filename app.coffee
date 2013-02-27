@@ -3,6 +3,6 @@ servers			= require('./settings.json').servers
 
 index=0
 for server in servers
-	tmp=child_process.spawn(process.execPath, ['bridge.js', index], {'detached':true, 'stdio':'ignore'})
+	tmp=child_process.spawn(process.execPath, [__dirname+'/bridge.js', index], {'detached':true, 'stdio':'ignore'})
 	tmp.unref()
 	index+=1
