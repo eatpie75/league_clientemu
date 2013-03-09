@@ -6,11 +6,14 @@
 
   servers = require('./settings.json').servers;
 
+  process.chdir(__dirname);
+
   index = 0;
 
   for (_i = 0, _len = servers.length; _i < _len; _i++) {
     server = servers[_i];
     tmp = child_process.spawn(process.execPath, [__dirname + '/bridge.js', index], {
+      'cwd': __dirname,
       'detached': true,
       'stdio': 'ignore'
     });

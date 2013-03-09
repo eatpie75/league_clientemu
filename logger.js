@@ -10,7 +10,7 @@
     winston.remove(winston.transports.Console);
     winston.add(winston.transports.File, {
       'filename': settings.log,
-      'maxsize': 104857600,
+      'maxsize': 5243000,
       'maxFiles': 3,
       'json': false,
       'handleExceptions': true

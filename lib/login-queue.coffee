@@ -70,7 +70,7 @@ performQueueRequest=(host, username, password, cb)->
 				logger.info("login queue: #{username} got token")
 				cb(null, res)
 			else if res.status=='LOGIN' and not res.token
-				logger.info("login queue: #{username} got login but no token")
+				logger.error("login queue: #{username} got login but no token")
 				process.exit(1)
 			else if res.status=='QUEUE'
 				user=res.user
@@ -83,6 +83,9 @@ performQueueRequest=(host, username, password, cb)->
 				target=tmp.id
 				current=tmp.current
 				_next_check()
+			else if res.status=='BUSY'
+				logger.warn("login queue: #{username} got busy server, retrying in #{res.status.delay}")
+				setTimeout(_attempt_login, res.status.delay)
 			else
 				logger.error("login queue: is confused", res)
 		)
