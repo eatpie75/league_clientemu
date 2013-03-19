@@ -113,7 +113,7 @@ class LolClient extends EventEmitter
 				logger.error('lol-client: NetConnect failed') if @options.debug
 				@stream.destroy()
 			else
-				logger.error('lol-client: NetConnect success') if @options.debug
+				logger.info('lol-client: NetConnect success') if @options.debug
 				@performLogin(result)
 		)
 
@@ -140,9 +140,9 @@ class LolClient extends EventEmitter
 		cmd = new RTMPCommand(0x11, null, null, null, [new AuthPacket(@options).generate()])
 		@rtmp.send(cmd, (err, result)=>
 			if err
-				logger.info('lol-client: RTMP Auth failed') if @options.debug
+				logger.error('lol-client: RTMP Auth failed') if @options.debug
 			else
-				logger.error('lol-client: Connect Process Completed') if @options.debug
+				logger.info('lol-client: Connect Process Completed') if @options.debug
 				@emit('connection')
 				@rtmp.ev.on('throttled', =>@emit('throttled'))
 		)

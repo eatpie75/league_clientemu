@@ -1,5 +1,5 @@
-settings= require('./settings.json')
-winston	= require('winston')
+settings	= require('./settings.json')
+winston		= require('winston')
 
 if not process.env.VCAP_APPLICATION?
 	winston.remove(winston.transports.Console)

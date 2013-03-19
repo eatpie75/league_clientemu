@@ -24,7 +24,7 @@ _check_parent=->
 	catch e
 		logger.warn("client: #{id}: parent has died, closing")
 		process.exit(5)
-check_parent=setInterval(_check_parent, 1000)
+check_parent=setInterval(_check_parent, 2000)
 
 process.on('SIGTERM', ()->
 	logger.warn("client: #{id}: got SIGTERM")

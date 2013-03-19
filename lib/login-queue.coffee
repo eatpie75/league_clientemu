@@ -10,6 +10,7 @@ performQueueRequest=(host, username, password, cb)->
 		'host':host
 		'port':443
 		'method':'POST'
+		'rejectUnauthorized':false
 	}
 	current=0
 	target=0
@@ -64,13 +65,14 @@ performQueueRequest=(host, username, password, cb)->
 		)
 	_attempt_login=->
 		args={'path':'/login-queue/rest/queue/authenticate'}
-		data = "payload=user%3D#{username}%2Cpassword%3D#{password}"
+		data="payload=user%3D#{username}%2Cpassword%3D#{password}"
 		_request(args, data, (err, res)->
 			if res.status=='LOGIN' and res.token
 				logger.info("login queue: #{username} got token")
 				cb(null, res)
 			else if res.status=='LOGIN' and not res.token
 				logger.error("login queue: #{username} got login but no token")
+				cb("#{username} got login but no token")
 				process.exit(1)
 			else if res.status=='QUEUE'
 				user=res.user
@@ -88,6 +90,7 @@ performQueueRequest=(host, username, password, cb)->
 				setTimeout(_attempt_login, res.status.delay)
 			else
 				logger.error("login queue: is confused", res)
+				cb('is confused')
 		)
 	_request=(kwargs, payload, tcb)->
 		req_options=u.clone(options)
@@ -105,7 +108,7 @@ performQueueRequest=(host, username, password, cb)->
 			)
 		)
 		req.on('error', (err)->
-			logger.error('login queue: request error', err)
+			logger.error('login queue: request error'+err, err)
 			req.abort()
 			process.exit(1)
 		).on('socket', (socket)->
