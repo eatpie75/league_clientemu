@@ -79,10 +79,6 @@ start_client=->
 			status.login_errors=0
 			status.connected=true
 			app.set('lolclient', client)
-			if mode=='normal'
-				app.listen(app.settings.port, 'localhost')
-			else if mode=='appfog'
-				app.listen(app.settings.port)
 		else if msg.event=='connected' and not initial
 			logger.info("bridge: #{id}: Reconnected")
 			status.login_errors=0
@@ -120,8 +116,7 @@ start_client=->
 		else
 			logger.error("bridge: #{id}: Client closed", {'code':code, 'signal':signal})
 	)
-	client.send({'event':'setup', 'options':options})
-	client.send({'event':'connect'})
+	client.send({'event':'connect', 'options':options})
 client_restart=->
 	client.removeAllListeners()
 	start_client()
@@ -132,10 +127,12 @@ if mode=='normal'
 	id="#{options.region}:#{options.username}"
 	process.title="bridge.js: #{id}"
 	app.set('port', options.listen_port)
+	app.listen(app.settings.port, 'localhost')
 	start_client()
 else if mode=='appfog'
 	options=require("./#{server_list}").servers[instance]
 	id="#{options.region}:#{options.username}"
 	status.id=id
 	app.set('port', process.env.VCAP_APP_PORT)
+	app.listen(app.settings.port)
 	start_client()

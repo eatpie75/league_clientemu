@@ -18,7 +18,6 @@ performQueueRequest=(host, username, password, cb)->
 	queue_rate=0
 	_next_check=->
 		remaining=Math.round((target-current)/queue_rate)
-		logger.info("login queue: #{username} in queue, postition:#{current}/#{target}, #{Math.floor(remaining/60)}:#{Math.round(remaining%60)} remaining")
 		diff=target-current
 		if diff<50
 			delay=3000
@@ -30,9 +29,11 @@ performQueueRequest=(host, username, password, cb)->
 			delay=30000
 		else
 			delay=180000
+		logger.info("login queue: #{username} in queue, postition:#{current}/#{target}, #{Math.floor(remaining/60)}:#{Math.round(remaining%60)} remaining, next checkin: #{Math.floor((delay/1000)/60)}:#{Math.round((delay/1000)%60)}")
 		setTimeout(_check_queue, delay)
 	_check_queue=->
 		args={'path':"/login-queue/rest/queue/ticker/#{@queue_name}"}
+		# logger.info("login queue: #{username} checking queue")
 		_request(args, null, (err, res)->
 			key=u.find(u.keys(res), (tmp)->
 				if Number(tmp)==queue_node then true else false
@@ -86,7 +87,7 @@ performQueueRequest=(host, username, password, cb)->
 				current=tmp.current
 				_next_check()
 			else if res.status=='BUSY'
-				logger.warn("login queue: #{username} got busy server, retrying in #{res.status.delay}")
+				logger.warn("login queue: #{username} got busy server, retrying in #{res.status.delay}", res)
 				setTimeout(_attempt_login, res.status.delay)
 			else
 				logger.error("login queue: is confused", res)

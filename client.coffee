@@ -30,7 +30,7 @@ process.on('SIGTERM', ()->
 	logger.warn("client: #{id}: got SIGTERM")
 	process.exit(0)
 ).on('message', (msg)->
-	if msg.event=='setup'
+	if msg.event=='connect'
 		options={
 			region:		msg.options.region
 			username:	msg.options.username
@@ -38,7 +38,7 @@ process.on('SIGTERM', ()->
 			version: 	msg.options.version
 		}
 		id="#{options.region}:#{options.username}"
-	else if msg.event=='connect'
+
 		client=new lol_client(options)
 		client.once('connection', ->
 			process.send({'event':'connected'})
