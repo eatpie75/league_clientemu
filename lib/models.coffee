@@ -243,6 +243,8 @@ class Leagues
 		@data=[]
 		for league in @leagues
 			league=league.object
+			if league.queue!='RANKED_SOLO_5x5'
+				continue
 			league_rank=@ranks[league.requestorsRank.toLowerCase()]
 			current={
 				'queue':	league.queue
