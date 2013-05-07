@@ -116,10 +116,10 @@
       if (msg.event === ("" + rid[0] + "__finished")) {
         if (msg.data.error != null) {
           if (msg.data.error === 'RETRY') {
-            logger.warn("mass update: Empty Summoner", msg.data.error);
+            logger.warn("mass update: " + req.server_id + ": Empty Summoner", msg.data.error);
             errors = log_error(errors, msg.data.error);
             if (errors[index_of_object(errors, 'error', msg.data.error)].count > 10) {
-              logger.error("mass update: Too many errors");
+              logger.error("mass update: " + req.server_id + ": Too many errors");
               throttled();
             } else {
               timers.push(setTimeout(function() {
@@ -136,7 +136,7 @@
               }, 2000));
             }
           } else if (msg.data.error === 'BANNED') {
-            logger.warn("mass update: Banned Summoner", msg.data.error);
+            logger.warn("mass update: " + req.server_id + ": Banned Summoner", msg.data.error);
             errors = log_error(errors, msg.data.error);
             running_queries -= 1;
             timers.push(setTimeout(function() {
@@ -192,7 +192,7 @@
         }
       } else if (msg.event === ("" + rid[1] + "__finished")) {
         if (msg.data.error != null) {
-          logger.warn('mass update: Empty PlayerStats');
+          logger.warn("mass update: " + req.server_id + ": Empty PlayerStats");
           errors = log_error(errors, msg.data.error);
           if (errors[index_of_object(errors, 'error', msg.data.error)].count > 10) {
             throttled();
@@ -215,7 +215,7 @@
         return _next();
       } else if (msg.event === ("" + rid[2] + "__finished")) {
         if (msg.data.error != null) {
-          logger.warn('mass update: Empty RecentGames');
+          logger.warn("mass update: " + req.server_id + ": Empty RecentGames");
           errors = log_error(errors, msg.data.error);
           if (errors[index_of_object(errors, 'error', msg.data.error)].count > 10) {
             throttled();
@@ -238,7 +238,7 @@
         return _next();
       } else if (msg.event === ("" + rid[3] + "__finished")) {
         if (msg.data.error != null) {
-          logger.warn('mass update: Empty MasteryBook');
+          logger.warn("mass update: " + req.server_id + ": Empty MasteryBook");
           errors = log_error(errors, msg.data.error);
           if (errors[index_of_object(errors, 'error', msg.data.error)].count > 10) {
             throttled();
@@ -261,7 +261,7 @@
         return _next();
       } else if (msg.event === ("" + rid[4] + "__finished")) {
         if (msg.data.error != null) {
-          logger.warn('mass update: Empty Leagues');
+          logger.warn("mass update: " + req.server_id + ": Empty Leagues");
           errors = log_error(errors, msg.data.error);
           if (errors[index_of_object(errors, 'error', msg.data.error)].count > 10) {
             throttled();
@@ -292,7 +292,7 @@
       if (running_queries < 3 && queue.length > 0) {
         running_queries += 1;
         key = queue.shift();
-        logger.info('mass update:', key);
+        logger.info("mass update: " + req.server_id + ": ", key);
         extra = {
           'runes': runes,
           'masteries': masteries
@@ -307,7 +307,7 @@
           });
         } catch (_error) {
           error = _error;
-          return logger.error('mass_update: oh god', error);
+          return logger.error("mass_update: " + req.server_id + ":  oh god", error);
         }
       } else if (running_queries === 0 && queue.length === 0) {
         client.removeListener('message', _get);

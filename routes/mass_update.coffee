@@ -43,17 +43,17 @@ module.exports=(req, res)->
 		if msg.event=="#{rid[0]}__finished"
 			if msg.data.error?
 				if msg.data.error=='RETRY'
-					logger.warn("mass update: Empty Summoner", msg.data.error)
+					logger.warn("mass update: #{req.server_id}: Empty Summoner", msg.data.error)
 					errors=log_error(errors, msg.data.error)
 					if errors[index_of_object(errors, 'error', msg.data.error)].count>10
-						logger.error("mass update: Too many errors")
+						logger.error("mass update: #{req.server_id}: Too many errors")
 						throttled()
 					else
 						timers.push(setTimeout(->
 							client.send({'event':'get', 'model':'Summoner', 'query':msg.query, 'uuid':rid[0], 'extra':{'runes':runes, 'masteries':masteries}})
 						, 2000))
 				else if msg.data.error=='BANNED'
-					logger.warn("mass update: Banned Summoner", msg.data.error)
+					logger.warn("mass update: #{req.server_id}: Banned Summoner", msg.data.error)
 					errors=log_error(errors, msg.data.error)
 					running_queries-=1
 					timers.push(setTimeout(->
@@ -79,7 +79,7 @@ module.exports=(req, res)->
 				client.send({'event':'get', 'model':'MasteryBook', 'query':{'summoner_id':summoner.summoner_id, 'account_id':summoner.account_id}, 'uuid':rid[3]})
 		else if msg.event=="#{rid[1]}__finished"
 			if msg.data.error?
-				logger.warn('mass update: Empty PlayerStats')
+				logger.warn("mass update: #{req.server_id}: Empty PlayerStats")
 				errors=log_error(errors, msg.data.error)
 				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
 					throttled()
@@ -95,7 +95,7 @@ module.exports=(req, res)->
 			_next()
 		else if msg.event=="#{rid[2]}__finished"
 			if msg.data.error?
-				logger.warn('mass update: Empty RecentGames')
+				logger.warn("mass update: #{req.server_id}: Empty RecentGames")
 				errors=log_error(errors, msg.data.error)
 				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
 					throttled()
@@ -111,7 +111,7 @@ module.exports=(req, res)->
 			_next()
 		else if msg.event=="#{rid[3]}__finished"
 			if msg.data.error?
-				logger.warn('mass update: Empty MasteryBook')
+				logger.warn("mass update: #{req.server_id}: Empty MasteryBook")
 				errors=log_error(errors, msg.data.error)
 				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
 					throttled()
@@ -127,7 +127,7 @@ module.exports=(req, res)->
 			_next()
 		else if msg.event=="#{rid[4]}__finished"
 			if msg.data.error?
-				logger.warn('mass update: Empty Leagues')
+				logger.warn("mass update: #{req.server_id}: Empty Leagues")
 				errors=log_error(errors, msg.data.error)
 				if errors[index_of_object(errors, 'error', msg.data.error)].count>10
 					throttled()
@@ -149,12 +149,12 @@ module.exports=(req, res)->
 		if running_queries<3 and queue.length>0
 			running_queries+=1
 			key=queue.shift()
-			logger.info('mass update:', key)
+			logger.info("mass update: #{req.server_id}: ", key)
 			extra={'runes':runes, 'masteries':masteries}
 			try
 				client.send({'event':'get', 'model':'Summoner', 'query':key, 'uuid':rid[0], 'extra':extra})
 			catch error
-				logger.error('mass_update: oh god', error)
+				logger.error("mass_update: #{req.server_id}:  oh god", error)
 		else if running_queries==0 and queue.length==0
 			client.removeListener('message', _get)
 			res.charset='utf8'
