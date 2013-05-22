@@ -125,16 +125,22 @@ class RecentGames
 			for stat in game.statistics.data
 				current['stats'][stat.object.statType.toLowerCase()]=stat.object.value.value
 			for key in [
-				'num_deaths', 'champions_killed', 'assists', 'largest_critical_strike', 'largest_killing_spree', 'largest_multi_kill',
+				'champions_killed', 'num_deaths', 'assists',
+				'largest_critical_strike', 'largest_killing_spree', 'largest_multi_kill',
 				'item0', 'item1', 'item2', 'item3', 'item4', 'item5',
-				'minions_killed', 'neutral_minions_killed', 'gold_earned',
-				'physical_damage_dealt_player', 'magic_damage_dealt_player', 'physical_damage_dealt_to_champions', 'magic_damage_dealt_to_champions',
+				'minions_killed',
+				'neutral_minions_killed', 'neutral_minions_killed_your_jungle', 'neutral_minions_killed_enemy_jungle',
+				'gold_earned',
+				'physical_damage_dealt_player', 'physical_damage_dealt_to_champions',
+				'magic_damage_dealt_player', 'magic_damage_dealt_to_champions',
+				'true_damage_dealt_player', 'true_damage_dealt_to_champions',
 				'total_damage_dealt', 'total_damage_dealt_to_champions',
-				'physical_damage_taken', 'magic_damage_taken', 'total_damage_taken'
+				'physical_damage_taken', 'magic_damage_taken', 'true_damage_taken', 'total_damage_taken'
 				'total_heal', 'total_time_spent_dead',
-				'turrets_killed', 'inhibitors_destroyed',
+				'total_time_crowd_control_dealt',
+				'turrets_killed', 'barracks_killed', #'inhibitors_destroyed', 
 				'lose', 'win',
-				'sight_wards_bought_in_game', 'vision_wards_bought_in_game',
+				'sight_wards_bought_in_game', 'vision_wards_bought_in_game', 'ward_placed', 'ward_killed',
 				'node_neutralize', 'node_neutralize_assist', 'node_capture', 'node_capture_assist',
 				'victory_point_total', 'team_objective', 'objective_player_score', 'combat_player_score', 'total_player_score', 'total_score_rank',
 			]
@@ -243,8 +249,9 @@ class Leagues
 		@data=[]
 		for league in @leagues
 			league=league.object
-			if league.queue!='RANKED_SOLO_5x5'
+			if league.queue!='RANKED_SOLO_5x5' or league.requestorsRank=='null'
 				continue
+			if debug then logger.debug('models: Leagues: ', league)
 			league_rank=@ranks[league.requestorsRank.toLowerCase()]
 			current={
 				'queue':	league.queue
@@ -332,7 +339,7 @@ class Search
 				@account_id=@search.account_id
 		@data={}
 	parse:=>
-		logger.info('models: search: ', @search)
+		if debug then logger.debug('models: search: ', @search)
 		@data={}
 		current={
 			'account_id'		:@search.acctId.value
