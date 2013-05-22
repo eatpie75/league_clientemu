@@ -1,6 +1,7 @@
 uuid		= require('node-uuid')
 models		= require('../lib/models')
 logger		= require('winston')
+debug		= require('./settings.json').debug
 
 has_key=(obj, key)->obj.hasOwnProperty(key)
 index_of_object=(array, key, value)->
@@ -60,6 +61,7 @@ module.exports=(req, res)->
 						_next()
 					, 10))
 				return null
+			if debug then logger.debug('mass update: Summoner', msg.data)
 			summoner=msg.data
 			data.requests+=msg.extra.requests
 			account_index=index_of_object(data.body.accounts, 'account_id', summoner.account_id)
@@ -88,6 +90,7 @@ module.exports=(req, res)->
 						client.send({'event':'get', 'model':'PlayerStats', 'query':msg.query, 'uuid':rid[1]})
 					, 2000))
 				return null
+			if debug then logger.debug('mass update: PlayerStats', msg.data)
 			data.requests+=msg.extra.requests
 			account_index=index_of_object(data.body.accounts, 'account_id', msg.extra.account_id)
 			data.body.accounts[account_index].stats=msg.data
@@ -104,6 +107,7 @@ module.exports=(req, res)->
 						client.send({'event':'get', 'model':'RecentGames', 'query':msg.query, 'uuid':rid[2]})
 					, 2000))
 				return null
+			if debug then logger.debug('mass update: RecentGames', msg.data)
 			data.requests+=msg.extra.requests
 			account_index=index_of_object(data.body.accounts, 'account_id', msg.extra.account_id)
 			data.body.accounts[account_index].games=msg.data
@@ -120,6 +124,7 @@ module.exports=(req, res)->
 						client.send({'event':'get', 'model':'MasteryBook', 'query':msg.query, 'uuid':rid[3]})
 					, 2000))
 				return null
+			if debug then logger.debug('mass update: MasteryBook', msg.data)
 			data.requests+=msg.extra.requests
 			account_index=index_of_object(data.body.accounts, 'account_id', msg.extra.account_id)
 			data.body.accounts[account_index].masteries=msg.data
@@ -136,6 +141,7 @@ module.exports=(req, res)->
 						client.send({'event':'get', 'model':'Leagues', 'query':msg.query, 'uuid':rid[4]})
 					, 2000))
 				return null
+			if debug then logger.debug('mass update: Leagues', msg.data)
 			data.requests+=msg.extra.requests
 			account_index=index_of_object(data.body.accounts, 'summoner_id', msg.extra.summoner_id)
 			data.body.accounts[account_index].leagues=msg.data

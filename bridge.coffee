@@ -4,6 +4,7 @@ http			= require('http')
 path			= require('path')
 routes			= require('./routes')
 logger			= require('./logger')
+debug			= require('./settings.json').debug
 
 options={}
 id=''
@@ -30,6 +31,13 @@ else
 process.on('SIGTERM', ()->
 	logger.warn("bridge: #{id}: got SIGTERM")
 	process.exit(0)
+).on('SIGUSR2', ()->
+	logger.warn("bridge: #{id}: get SIGUSR2, restarting client")
+	client.kill()
+	setTimeout(->
+		client_restart()
+	, 3000
+	)
 )
 
 server_id_middleware=(req, res, next)->
@@ -72,15 +80,13 @@ start_client=->
 		options=require("./#{server_list}").servers[instance]
 	client=child_process.fork('client.js', [], {'silent':true})
 	client.on('message', (msg)->
-		# logger.info(JSON.stringify(msg))
-		if msg.event=='connected' and initial
-			initial=false
-			logger.info("bridge: #{id}: Connected")
-			status.login_errors=0
-			status.connected=true
-			app.set('lolclient', client)
-		else if msg.event=='connected' and not initial
-			logger.info("bridge: #{id}: Reconnected")
+		if debug then logger.debug("bridge: #{id}: client message", msg)
+		if msg.event=='connected'
+			if initial
+				initial=false
+				logger.info("bridge: #{id}: Connected")
+			else
+				logger.info("bridge: #{id}: Reconnected")
 			status.login_errors=0
 			status.connected=true
 			app.set('lolclient', client)
@@ -90,7 +96,7 @@ start_client=->
 			logger.error("bridge: #{id}: TIMEOUT")
 	).on('exit', (code, signal)->
 		status.connected=false
-		# logger.info('wat', [code, signal])
+		if debug then logger.debug("bridge: #{id}: client exit", [code, signal])
 		if code in [3, 5]
 			logger.error("bridge: #{id}: Client closed", {'code':code, 'signal':signal})
 			setTimeout(client_restart, 2000)
