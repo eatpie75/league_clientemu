@@ -33,6 +33,7 @@ process.on('SIGTERM', ()->
 	process.exit(0)
 ).on('SIGUSR2', ()->
 	logger.warn("bridge: #{id}: get SIGUSR2, restarting client")
+	client.removeListener('exit', client_exited)
 	client.kill()
 	setTimeout(->
 		client_restart()
@@ -74,6 +75,33 @@ app.get('/masterybook/', lolclient_middleware, routes.masterybook)
 
 logger.info("bridge: Preparing to connect")
 
+client_exited=(code, signal)->
+	status.connected=false
+	if debug then logger.debug("bridge: #{id}: client exit", [code, signal])
+	if code in [3, 5]
+		logger.error("bridge: #{id}: Client closed", {'code':code, 'signal':signal})
+		setTimeout(client_restart, 2000)
+	else if code in [1, 4]
+		get_time=()=>
+			if status.login_errors*500+1000<=6000
+				logger.info("bridge: #{id}: restarting client in #{status.login_errors*500+1000}ms")
+				status.login_errors*500+1000
+			else if 10<status.login_errors<20
+				logger.info("bridge: #{id}: restarting client in 10s")
+				10000
+			else if 20<=status.login_errors<30
+				logger.info("bridge: #{id}: restarting client in 1m")
+				60000
+			else if 30<=status.login_errors<40
+				logger.info("bridge: #{id}: restarting client in 5m")
+				300000
+			else if 40<=status.login_errors
+				logger.info("bridge: #{id}: restarting client in 10m")
+				600000
+		status.login_errors+=1
+		setTimeout(client_restart, get_time())
+	else
+		logger.error("bridge: #{id}: Client closed", {'code':code, 'signal':signal})
 
 start_client=->
 	if not initial
@@ -94,34 +122,7 @@ start_client=->
 			logger.error("bridge: #{id}: THROTTLED")
 		else if msg.event=='timeout'
 			logger.error("bridge: #{id}: TIMEOUT")
-	).on('exit', (code, signal)->
-		status.connected=false
-		if debug then logger.debug("bridge: #{id}: client exit", [code, signal])
-		if code in [3, 5]
-			logger.error("bridge: #{id}: Client closed", {'code':code, 'signal':signal})
-			setTimeout(client_restart, 2000)
-		else if code in [1, 4]
-			get_time=()=>
-				if status.login_errors*500+1000<=6000
-					logger.info("bridge: #{id}: restarting client in #{status.login_errors*500+1000}ms")
-					status.login_errors*500+1000
-				else if 10<status.login_errors<20
-					logger.info("bridge: #{id}: restarting client in 10s")
-					10000
-				else if 20<=status.login_errors<30
-					logger.info("bridge: #{id}: restarting client in 1m")
-					60000
-				else if 30<=status.login_errors<40
-					logger.info("bridge: #{id}: restarting client in 5m")
-					300000
-				else if 40<=status.login_errors
-					logger.info("bridge: #{id}: restarting client in 10m")
-					600000
-			status.login_errors+=1
-			setTimeout(client_restart, get_time())
-		else
-			logger.error("bridge: #{id}: Client closed", {'code':code, 'signal':signal})
-	)
+	).on('exit', client_exited)
 	client.send({'event':'connect', 'options':options})
 client_restart=->
 	client.removeAllListeners()
