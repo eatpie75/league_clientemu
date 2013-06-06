@@ -1,7 +1,7 @@
 uuid		= require('node-uuid')
 models		= require('../lib/models')
 logger		= require('winston')
-debug		= require('./settings.json').debug
+debug		= require('../settings.json').debug
 
 has_key=(obj, key)->obj.hasOwnProperty(key)
 index_of_object=(array, key, value)->

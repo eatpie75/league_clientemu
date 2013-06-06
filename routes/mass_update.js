@@ -8,7 +8,7 @@
 
   logger = require('winston');
 
-  debug = require('./settings.json').debug;
+  debug = require('../settings.json').debug;
 
   has_key = function(obj, key) {
     return obj.hasOwnProperty(key);

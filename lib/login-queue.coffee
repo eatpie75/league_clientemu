@@ -101,7 +101,7 @@ performQueueRequest=(host, username, password, cb)->
 		req=agent.request(req_options, (res)->
 			res.on('data', (d)->
 				if res.statusCode!=200
-					logger.error('login queue: got 500')
+					logger.error('login queue: #{username} got 500')
 					data={}
 				else
 					data=JSON.parse(d.toString('utf-8'))
@@ -109,13 +109,13 @@ performQueueRequest=(host, username, password, cb)->
 			)
 		)
 		req.on('error', (err)->
-			logger.error('login queue: request error'+err, err)
+			logger.error('login queue: #{username} request error'+err, err)
 			req.abort()
 			process.exit(1)
 		).on('socket', (socket)->
 			socket.setTimeout(20000)
 			socket.on('timeout', ()->
-				logger.error("login queue: timeout on: #{host}")
+				logger.error("login queue: #{username} timeout on: #{host}")
 				req.abort()
 				process.exit(1)
 			)
