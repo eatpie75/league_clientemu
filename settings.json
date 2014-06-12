@@ -1,13 +1,13 @@
 {
-	"debug":false,
+	"debug":true,
 	"log":"./logs/clientemu.log",
 	"servers": [
 		{
 			"username":		"unprojapina1",
-			"password":		"penis2",
+			"password":		"penispenis2",
 			"region":		"na",
 			"listen_port":	"8081",
-			"version":		"3.8.13_06_11_14_15"
+			"version":		"4.3.14_02_22_02_29"
 		}
 	]
 }
