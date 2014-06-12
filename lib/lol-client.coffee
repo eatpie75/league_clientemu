@@ -12,7 +12,7 @@ EventEmitter= require('events').EventEmitter
 class LolClient extends EventEmitter
 	_rtmpHosts:{
 		'na':	'prod.na1.lol.riotgames.com'
-		'euw':	'prod.eu.lol.riotgames.com'
+		'euw':	'prod.euw1.lol.riotgames.com'
 		'eune':	'prod.eun1.lol.riotgames.com'
 		'br':	'prod.br.lol.riotgames.com'
 		'pbe':	'prod.pbe1.lol.riotgames.com'
@@ -20,7 +20,7 @@ class LolClient extends EventEmitter
 	
 	_loginQueueHosts:{
 		'na':	'lq.na1.lol.riotgames.com'
-		'euw':	'lq.eu.lol.riotgames.com'
+		'euw':	'lq.euw1.lol.riotgames.com'
 		'eune':	'lq.eun1.lol.riotgames.com'
 		'br':	'lq.br.lol.riotgames.com'
 		'pbe':	'lq.pbe1.lol.riotgames.com'
@@ -37,6 +37,7 @@ class LolClient extends EventEmitter
 
 		@options.username=@options.username
 		@options.password=@options.password
+
 		@options.version=@options.version
 		@options.debug=@options.debug || false
 
@@ -132,7 +133,7 @@ class LolClient extends EventEmitter
 		)
 
 	performAuth:(result)=>
-		logger.info('lol-client: Performing RTMP Auth..') if @options.debug
+		logger.info('lol-client: Performing RTMP Auth...') if @options.debug
 		AuthPacket = lolPackets.AuthPacket
 		
 		@options.authToken=result.args[0].body.object.token
@@ -142,11 +143,38 @@ class LolClient extends EventEmitter
 			if err
 				logger.error('lol-client: RTMP Auth failed') if @options.debug
 			else
-				logger.info('lol-client: Connect Process Completed') if @options.debug
+				logger.info('lol-client: Auth Completed') if @options.debug
+				@performSubscription(result)
+		)
+
+	performSubscription:(result)=>
+		logger.info('lol-client: Performing RTMP Subscriptions...') if @options.debug
+		SubscribePacket = lolPackets.SubscribePacket
+		to_subscribe=['bc', 'cn', 'gn']
+		success=[]
+		failure=[]
+
+		for subscription in to_subscribe
+			body_string="#{subscription}-#{@options.account_id}"
+			header_string=if subscription=='bc' then 'bc' else "#{subscription}-#{@options.account_id}"
+			cmd = new RTMPCommand(0x11, null, null, null, [new SubscribePacket(@options).generate(body_string, header_string)])
+			@rtmp.send(cmd, (err, result)=>
+				if err
+					logger.error("lol-client: Subscription to #{body_string} failed")
+					failure.push("#{subscription}")
+				else
+					logger.info("lol-client: Subscription to #{header_string} completed") if @options.debug
+					success.push("#{subscription}")
+				_cb()
+			)
+		_cb=()=>
+			if success.length==to_subscribe.length
+				logger.info('lol-client: Connection Completed') if @options.debug
 				@emit('connection')
 				@rtmp.ev.on('throttled', =>@emit('throttled'))
-		)
-	
+			else
+				logger.error('lol-client: Something has gone wrong', [to_subscribe, success, failure]) if @options.debug
+
 	getSummonerByName:(name, cb)=>
 		logger.info("Finding player by name: #{name}") if @options.debug
 		LookupPacket=lolPackets.LookupPacket

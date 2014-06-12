@@ -119,6 +119,35 @@ class AuthPacket extends Packet
 		headers.encoding=2
 		return headers
 
+class SubscribePacket extends Packet
+	generate:(body_string, header_string)->
+		object=new ASObject()
+		object.name='flex.messaging.messages.CommandMessage'
+		object.keys=['operation', 'correlationId', 'timestamp', 'clientId', 'timeToLive', 'messageId', 'destination', 'headers', 'body']
+		object.object=
+			operation:		0
+			correlationId:	''
+			timestamp:		0
+			clientId:		body_string
+			timeToLive:		0
+			messageId:		uuid().toUpperCase()
+			destination:	'messagingDestination'
+			headers:		@generateHeaders(header_string)
+			body:			{}
+		object.encoding=0
+		return object
+
+	generateHeaders:(header_string)->
+		headers=new ASObject()
+		headers.name=''
+		headers.object=
+			DSId:				@options.dsid
+			DSRequestTimeout:	60
+			DSEndpoint:			'my-rtmps'
+			DSSubtopic:			header_string
+		headers.encoding=2
+		return headers
+
 class HeartbeatPacket extends Packet
 	generate:(account_id, counter)->
 		object=new ASObject()
@@ -470,6 +499,7 @@ class GetAllLeaguesForPlayerPacket extends Packet
 exports.ConnectPacket			=ConnectPacket
 exports.LoginPacket				=LoginPacket
 exports.AuthPacket				=AuthPacket
+exports.SubscribePacket			=SubscribePacket
 exports.HeartbeatPacket			=HeartbeatPacket
 exports.LookupPacket			=LookupPacket
 exports.GetSummonerDataPacket	=GetSummonerDataPacket
