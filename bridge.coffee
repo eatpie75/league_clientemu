@@ -52,18 +52,17 @@ bridge_status_middleware=(req, res, next)->
 	next()
 
 app=express()
-app.configure(->
-	app.use(server_id_middleware)
-	app.use(express.logger({'format':'tiny', 'immediate':false, 'stream':{'write':(msg, enc)->logger.info("http: #{id}: #{msg.slice(0, -1)}")}}))
-	app.use(express.bodyParser())
-	app.use(express.methodOverride())
-	app.use(express.compress())
-	app.use(app.router)
-	app.use((err, req, res, next)->res.send(500))
-)
-app.configure('development', ->
-	app.use(express.errorHandler())
-)
+app.use(server_id_middleware)
+app.use(express.logger({'format':'tiny', 'immediate':false, 'stream':{'write':(msg, enc)->logger.info("http: #{id}: #{msg.slice(0, -1)}")}}))
+app.use(express.bodyParser())
+app.use(express.methodOverride())
+app.use(express.compress())
+# app.use(app.router)
+app.use((err, req, res, next)->res.send(500))
+
+# app.configure('development', ->
+# 	app.use(express.errorHandler())
+# )
 
 app.get('/status/', bridge_status_middleware, routes.status)
 app.get('/mass_update/', lolclient_middleware, routes.mass_update)
@@ -82,7 +81,7 @@ client_exited=(code, signal)->
 		logger.error("bridge: #{id}: Client closed", {'code':code, 'signal':signal})
 		setTimeout(client_restart, 2000)
 	else if code in [1, 4]
-		get_time=()=>
+		get_time=()->
 			if status.login_errors*500+1000<=6000
 				logger.info("bridge: #{id}: restarting client in #{status.login_errors*500+1000}ms")
 				status.login_errors*500+1000
@@ -100,6 +99,9 @@ client_exited=(code, signal)->
 				600000
 		status.login_errors+=1
 		setTimeout(client_restart, get_time())
+	else if signal=='SIGABRT'
+		logger.error("bridge: #{id}: Client closed", {'code':code, 'signal':signal})
+		setTimeout(client_restart, 2000)
 	else
 		logger.error("bridge: #{id}: Client closed", {'code':code, 'signal':signal})
 
@@ -122,6 +124,8 @@ start_client=->
 			logger.error("bridge: #{id}: THROTTLED")
 		else if msg.event=='timeout'
 			logger.error("bridge: #{id}: TIMEOUT")
+		else if msg.event=='memory'
+			logger.error("bridge: #{id}: TOO MUCH MEMORY OR SOMETHING")
 	).on('exit', client_exited)
 	client.send({'event':'connect', 'options':options})
 client_restart=->

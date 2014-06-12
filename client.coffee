@@ -26,6 +26,13 @@ _check_parent=->
 		process.exit(5)
 check_parent=setInterval(_check_parent, 2000)
 
+_check_memory=->
+	rss=process.memoryUsage().rss/1024
+	if rss>150000
+		process.send({'event':'memory'})
+		process.exit(5)
+check_memory=setInterval(_check_memory, 1000)
+
 process.on('SIGTERM', ()->
 	logger.warn("client: #{id}: got SIGTERM")
 	process.exit(0)
