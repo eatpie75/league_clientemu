@@ -77,7 +77,7 @@ class LolClient extends EventEmitter
 		logger.info('lol-client: Connecting to SSL') if @options.debug
 
 		to={}
-		stream=tls.connect(@options.port, @options.host, ()=>
+		stream=tls.connect(@options.port, @options.host, {'rejectUnauthorized':false}, ()->
 			clearTimeout(to)
 			cb(null, stream)
 		)
@@ -88,7 +88,7 @@ class LolClient extends EventEmitter
 				process.exit(1)
 			, 30000
 		)
-		stream.on('error', ()=>
+		stream.on('error', ()->
 			stream.destroySoon()
 		)
 
@@ -179,7 +179,7 @@ class LolClient extends EventEmitter
 		logger.info("Finding player by name: #{name}") if @options.debug
 		LookupPacket=lolPackets.LookupPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new LookupPacket(@options).generate(name)])
-		@rtmp.send(cmd, (err, result)=>
+		@rtmp.send(cmd, (err, result)->
 			return cb(err) if err
 			return cb(err, null) unless result?.args?[0]?.body?
 			return cb(err, result.args[0].body)
@@ -189,7 +189,7 @@ class LolClient extends EventEmitter
 		logger.info("Fetching Summoner Stats for #{account_id}") if @options.debug
 		PlayerStatsPacket=lolPackets.PlayerStatsPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new PlayerStatsPacket(@options).generate(Number(account_id))])
-		@rtmp.send(cmd, (err, result)=>
+		@rtmp.send(cmd, (err, result)->
 			return cb(err) if err
 			return cb(err, null) unless result?.args?[0]?.body?
 			return cb(err, result.args[0].body)
@@ -199,7 +199,7 @@ class LolClient extends EventEmitter
 		logger.info("Fetching recent games for #{account_id}") if @options.debug
 		RecentGamesPacket=lolPackets.RecentGamesPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new RecentGamesPacket(@options).generate(Number(account_id))])
-		@rtmp.send(cmd, (err, result)=>
+		@rtmp.send(cmd, (err, result)->
 			return cb(err) if err
 			return cb(err, null) unless result?.args?[0]?.body?
 			return cb(err, result.args[0].body)
@@ -208,7 +208,7 @@ class LolClient extends EventEmitter
 	getAggregatedStats:(account_id, cb)=>
 		AggregatedStatsPacket=lolPackets.AggregatedStatsPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new AggregatedStatsPacket(@options).generate(Number(account_id))])
-		@rtmp.send(cmd, (err, result)=>
+		@rtmp.send(cmd, (err, result)->
 			return cb(err) if err
 			return cb(err, null) unless result?.args?[0]?.body?
 			return cb(err, result.args[0].body)
@@ -217,7 +217,7 @@ class LolClient extends EventEmitter
 	getTeamsForSummoner:(summoner_id, cb)=>
 		GetTeamForSummonerPacket=lolPackets.GetTeamForSummonerPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new GetTeamForSummonerPacket(@options).generate(Number(summoner_id))])
-		@rtmp.send(cmd, (err, result)=>
+		@rtmp.send(cmd, (err, result)->
 			cb(err) if err
 			cb(err, null) unless result?.args?[0]?.body?
 			cb(err, result.args[0].body)
@@ -226,7 +226,7 @@ class LolClient extends EventEmitter
 	getTeamById:(team_id, cb)=>
 		GetTeamByIdPacket=lolPackets.GetTeamByIdPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new GetTeamByIdPacket(@options).generate(team_id)])
-		@rtmp.send(cmd, (err, result)=>
+		@rtmp.send(cmd, (err, result)->
 			return cb(err) if err
 			return cb(err, null) unless result?.args?[0]?.body
 			return cb(err, result.args[0].body)
@@ -235,7 +235,7 @@ class LolClient extends EventEmitter
 	getSummonerData:(account_id, cb)=>
 		GetSummonerDataPacket=lolPackets.GetSummonerDataPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new GetSummonerDataPacket(@options).generate(account_id)])
-		@rtmp.send(cmd, (err, result)=>
+		@rtmp.send(cmd, (err, result)->
 			return cb(err) if err
 			return cb(err, null) unless result?.args?[0]?.body
 			return cb(err, result.args[0].body)
@@ -245,7 +245,7 @@ class LolClient extends EventEmitter
 		logger.info("Finding name by summonerId: #{name}") if @options.debug
 		GetSummonerNamePacket=lolPackets.GetSummonerNamePacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new GetSummonerNamePacket(@options).generate(name)])
-		@rtmp.send(cmd, (err, result)=>
+		@rtmp.send(cmd, (err, result)->
 			return cb(err) if err
 			return cb(err, null) unless result?.args?[0]?.body?
 			return cb(err, result.args[0].body)
@@ -255,7 +255,7 @@ class LolClient extends EventEmitter
 		logger.info("Finding spectator info by summonerId: #{name}") if @options.debug
 		getSpectatorInfoPacket=lolPackets.GetSpectatorInfoPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new getSpectatorInfoPacket(@options).generate(name)])
-		@rtmp.send(cmd, (err, result)=>
+		@rtmp.send(cmd, (err, result)->
 			return cb(err.args[0].error) if err?.args?[0]?.error?
 			return cb(err) if err
 			return cb(err, null) unless result?.args?[0]?.body?
@@ -266,7 +266,7 @@ class LolClient extends EventEmitter
 		logger.info("Finding masteries by summonerId: #{summoner_id}") if @options.debug
 		getMasteryBookPacket=lolPackets.GetMasteryBookPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new getMasteryBookPacket(@options).generate(summoner_id)])
-		@rtmp.send(cmd, (err, result)=>
+		@rtmp.send(cmd, (err, result)->
 			return cb(err) if err
 			return cb(err, null) unless result?.args?[0]?.body?
 			return cb(err, result.args[0].body)
@@ -276,7 +276,7 @@ class LolClient extends EventEmitter
 		logger.info("Finding leagues for summonerId: #{summoner_id}") if @options.debug
 		GetAllLeaguesForPlayerPacket=lolPackets.GetAllLeaguesForPlayerPacket
 		cmd=new RTMPCommand(0x11, null, null, null, [new GetAllLeaguesForPlayerPacket(@options).generate(summoner_id)])
-		@rtmp.send(cmd, (err, result)=>
+		@rtmp.send(cmd, (err, result)->
 			return cb(err) if err
 			return cb(err, null) unless result?.args?[0]?.body?
 			return cb(err, result.args[0].body)
