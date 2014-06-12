@@ -6,6 +6,11 @@ routes			= require('./routes')
 logger			= require('./logger')
 debug			= require('./settings.json').debug
 
+morgan			= require('morgan')
+bodyParser		= require('body-parser')
+compression		= require('compression')
+methodOverride	= require('method-override')
+
 options={}
 id=''
 client={}
@@ -53,10 +58,10 @@ bridge_status_middleware=(req, res, next)->
 
 app=express()
 app.use(server_id_middleware)
-app.use(express.logger({'format':'tiny', 'immediate':false, 'stream':{'write':(msg, enc)->logger.info("http: #{id}: #{msg.slice(0, -1)}")}}))
-app.use(express.bodyParser())
-app.use(express.methodOverride())
-app.use(express.compress())
+app.use(morgan({'format':'tiny', 'immediate':false, 'stream':{'write':(msg, enc)->logger.info("http: #{id}: #{msg.slice(0, -1)}")}}))
+app.use(bodyParser())
+app.use(methodOverride())
+app.use(compression())
 # app.use(app.router)
 app.use((err, req, res, next)->res.send(500))
 
