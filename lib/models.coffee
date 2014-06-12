@@ -139,7 +139,7 @@ class RecentGames
 				'physical_damage_taken', 'magic_damage_taken', 'true_damage_taken', 'total_damage_taken'
 				'total_heal', 'total_time_spent_dead',
 				'total_time_crowd_control_dealt',
-				'turrets_killed', 'barracks_killed', #'inhibitors_destroyed', 
+				'turrets_killed', 'barracks_killed', #'inhibitors_destroyed',
 				'lose', 'win',
 				'sight_wards_bought_in_game', 'vision_wards_bought_in_game', 'ward_placed', 'ward_killed',
 				'node_neutralize', 'node_neutralize_assist', 'node_capture', 'node_capture_assist',
@@ -147,6 +147,9 @@ class RecentGames
 			]
 				if not has_key(current.stats, key)
 					current.stats[key]=0
+			#SOMETIMES IT NEEDS SOME HELP
+			if typeof current.queue_length=='object'
+				current.queue_length=current.queue_length.value
 			@data.push(current)
 			@data.sort((a,b)->if a.id>b.id then -1 else if a.id<b.id then 1 else  0)
 		return @data
@@ -201,7 +204,7 @@ class Summoner
 			@client.getSummonerData(@account_id, (err, result)=>
 				if err?
 					@data=err
-				else if not result?
+				else if not result? or not result.object.summoner.object.acctId?.value?
 					@data={'error':'RETRY'}
 				else
 					@org=result
@@ -320,7 +323,7 @@ class Leagues
 				@data=err
 			else if err==null and result==null
 				@data={}
-			else if not result?
+			else if not result? or not result.object?.summonerLeagues?.data?
 				@data={'error':'RETRY'}
 			else
 				@summoner_id=summoner_id
