@@ -91,7 +91,7 @@ performQueueRequest=(host, username, password, cb)->
 				queue_name=res.champ
 				queue_node=res.node
 				queue_rate=res.rate+0.0
-				tmp=u.find(res.tickers, (ticker)=>
+				tmp=u.find(res.tickers, (ticker)->
 					if ticker.node==queue_node then true else false
 				)
 				target=tmp.id

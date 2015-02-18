@@ -11,7 +11,7 @@ EventEmitter= require('events').EventEmitter
 
 class LolClient extends EventEmitter
 	_rtmpHosts:{
-		'na':	'prod.na1.lol.riotgames.com'
+		'na':	'prod.na2.lol.riotgames.com'
 		'euw':	'prod.euw1.lol.riotgames.com'
 		'eune':	'prod.eun1.lol.riotgames.com'
 		'br':	'prod.br.lol.riotgames.com'
@@ -19,7 +19,7 @@ class LolClient extends EventEmitter
 	}
 	
 	_loginQueueHosts:{
-		'na':	'lq.na1.lol.riotgames.com'
+		'na':	'lq.na2.lol.riotgames.com'
 		'euw':	'lq.euw1.lol.riotgames.com'
 		'eune':	'lq.eun1.lol.riotgames.com'
 		'br':	'lq.br.lol.riotgames.com'

@@ -20,6 +20,8 @@ status=
 	total_requests:0
 	reconnects:0
 	connected:false
+version_override=false
+version_override_data=''
 
 if process.env.VCAP_APPLICATION?
 	af_app=JSON.parse(process.env.VCAP_APPLICATION)
@@ -113,6 +115,8 @@ client_exited=(code, signal)->
 start_client=->
 	if not initial
 		options=require("./#{server_list}").servers[instance]
+	if version_override
+		options.version=version_override_data
 	client=child_process.fork('client.js', [], {'silent':true})
 	client.on('message', (msg)->
 		if debug then logger.debug("bridge: #{id}: client message", msg)
@@ -131,6 +135,13 @@ start_client=->
 			logger.error("bridge: #{id}: TIMEOUT")
 		else if msg.event=='memory'
 			logger.error("bridge: #{id}: TOO MUCH MEMORY OR SOMETHING")
+		else if msg.event=='new_version'
+			logger.warn("bridge: #{id}: new client version #{msg.data}")
+			version_override=true
+			version_override_data=msg.data
+			client.removeListener('exit', client_exited)
+			client.kill()
+			client_restart()
 	).on('exit', client_exited)
 	client.send({'event':'connect', 'options':options})
 client_restart=->
